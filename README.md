@@ -1,3 +1,4 @@
+[README.md](https://github.com/user-attachments/files/33127719/README.md)
 # Presupuesto mensual LLYASA
 
 - `index.html`: la aplicación (no cambia cada mes).
@@ -5,13 +6,17 @@
 
 ## Actualización mensual
 1. Abre el sitio, escribe la contraseña, entra a **Captura de ventas**, pega las ventas y presiona **Aplicar captura**.
-2. En **Publicar para todos** presiona **Descargar datos.js** (sale cifrado con la contraseña actual).
-3. En GitHub: **Add file → Upload files**, arrastra `datos.js` (reemplaza al anterior) y **Commit changes**.
-4. GitHub Pages se actualiza solo en un par de minutos.
+2. En **Publicar para todos** presiona **Publicar ahora**. El archivo se cifra y se guarda directo en GitHub.
+3. En uno o dos minutos el sitio se actualiza (recarga con Ctrl+F5).
+
+Primera vez: en **Conexión con GitHub** captura usuario, repositorio, rama y un token fine-grained con permiso
+*Contents: Read and write* solo sobre este repositorio. El token se guarda únicamente en ese navegador.
+
+Sin token: **Descargar datos.js** y súbelo en *Add file → Upload files* (reemplaza al anterior).
 
 ## Cambiar la contraseña
-Antes de descargar, escribe la contraseña nueva (mínimo 10 caracteres) en el campo de Publicar. Sube el `datos.js` resultante y avisa la nueva clave al equipo.
+Escribe la nueva (mínimo 10 caracteres) en el campo de contraseña antes de publicar y avisa a tu equipo.
 
 ## Importante
 - Nunca subas un `datos.js` sin cifrar (el que empieza con `window.DATOS=`). El cifrado lo genera siempre el dashboard.
-- Si se filtra la contraseña, cámbiala y vuelve a publicar; las versiones anteriores del archivo siguen en el historial del repositorio y se abrirían con la contraseña vieja.
+- Cada publicación queda en el historial del repositorio (pestaña *History* del archivo).
