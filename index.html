@@ -122,10 +122,14 @@ footer{border-top:1px solid var(--line);padding:18px 16px 26px;color:var(--fg2)}
  </div>
  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center"><button type="button" id="dfill" class="reset">Llenar tabla con lo pegado</button><button type="button" id="dapply" class="btn">Aplicar captura</button><button type="button" id="dclear" class="reset">Quitar lo capturado de este mes</button><span id="dmsg" role="status" style="font-size:12.5px;color:var(--good)"></span></div>
  <div class="tw"><table style="min-width:560px"><thead><tr><th class="l">Ejecutivo</th><th class="l">Segmento</th><th>Venta registrada</th><th>Venta nueva (pesos)</th></tr></thead><tbody id="dtb"></tbody></table></div>
- <div class="note">Deja vacía la celda de quien no tenga venta capturada; no se modifica. Las capturas se guardan en este navegador: descarga un respaldo en Ajustes para no perderlas ni depender de la computadora.</div></div><div class="card" style="margin-top:16px"><h2>Publicar para todos</h2><div class="hint" style="margin:0 0 10px">Lo que capturas y ajustas aquí solo lo ves tú hasta que lo publiques. Descarga el archivo <b>datos.js</b> (sale cifrado) y reemplázalo en GitHub; en cuanto se publique el sitio, todos verán lo mismo.</div>
+ <div class="note">Deja vacía la celda de quien no tenga venta capturada; no se modifica. Las capturas se guardan en este navegador: descarga un respaldo en Ajustes para no perderlas ni depender de la computadora.</div></div><div class="card" style="margin-top:16px"><h2>Publicar para todos</h2><div class="hint" style="margin:0 0 10px">Lo que capturas y ajustas aquí solo lo ves tú hasta que lo publiques. Presiona <b>Publicar ahora</b> y el archivo, cifrado, se guarda directo en GitHub sin descargar nada; en uno o dos minutos todos verán lo mismo.</div>
  <div class="ctl" style="max-width:360px;margin-bottom:10px"><label for="ppw">Contraseña del sitio</label><input type="password" id="ppw" autocomplete="new-password" placeholder="Déjalo vacío para conservar la actual" style="width:100%"><div class="hint" style="margin:3px 0 0">Si escribes una nueva (mínimo 10 caracteres), el archivo se cifra con ella y desde la próxima publicación todos deberán usarla.</div></div>
-<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" id="pdown" class="btn">Descargar datos.js</button><button type="button" id="pcopy" class="reset">Copiar contenido de datos.js</button><span id="pmsg" role="status" style="font-size:12.5px;color:var(--good)"></span></div>
- <ol style="margin:12px 0 0;padding-left:20px;font-size:13px;color:var(--fg2);line-height:1.6"><li>Descarga <b>datos.js</b> aquí.</li><li>En GitHub abre tu repositorio, entra a <b>Add file → Upload files</b> y arrastra el archivo (reemplaza al anterior), o abre <b>datos.js</b>, presiona el lápiz, pega lo copiado y guarda.</li><li>Presiona <b>Commit changes</b>. En un minuto el sitio queda actualizado.</li></ol></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" id="ppub" class="btn">Publicar ahora</button><button type="button" id="pdown" class="reset">Descargar datos.js</button><button type="button" id="pcopy" class="reset">Copiar contenido de datos.js</button><span id="pmsg" role="status" style="font-size:12.5px;color:var(--good)"></span></div>
+ <details id="ghbox" style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px"><summary style="cursor:pointer;font-weight:500">Conexión con GitHub (una sola vez)</summary>
+  <div class="hint" style="margin:8px 0">El token se guarda únicamente en este navegador. Créalo en GitHub: Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate. Elige solo este repositorio y, en Repository permissions, <b>Contents: Read and write</b>.</div>
+  <div class="params"><div class="ctl"><label for="gh_u">Usuario</label><input id="gh_u" style="width:100%" autocomplete="off"></div><div class="ctl"><label for="gh_r">Repositorio</label><input id="gh_r" style="width:100%" autocomplete="off"></div><div class="ctl"><label for="gh_b">Rama</label><input id="gh_b" style="width:100%" autocomplete="off"></div><div class="ctl"><label for="gh_t">Token</label><input id="gh_t" type="password" style="width:100%" autocomplete="off"></div></div>
+  <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap"><button type="button" id="gh_save" class="reset">Guardar y probar</button><button type="button" id="gh_clear" class="reset">Quitar token de este navegador</button><span id="ghmsg" role="status" style="font-size:12.5px;color:var(--good)"></span></div>
+  <div class="hint" style="margin:8px 0 0">Si prefieres no conectar GitHub, usa “Descargar datos.js” y súbelo en Add file → Upload files.</div></details></div>
 </section>
 
 <section class="view" id="v-crm" hidden><div class="card" id="crm"><h2>Copiar al CRM</h2><div class="hint">Copia los presupuestos tal como quedan, con tus ajustes manuales, y pégalos en el CRM o en Excel. Los números van en pesos enteros, sin signo ni comas.</div>
@@ -383,6 +387,29 @@ const pm=(t,ok=true)=>{$('#pmsg').style.color=ok?'var(--good)':'var(--crit)';$('
 $('#pdown').onclick=async()=>{let txt;try{txt=await datosJS()}catch(e){pm(e.message,false);return}const blob=new Blob([txt],{type:'text/javascript'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='datos.js';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);pm('Descargado y cifrado. Súbelo a GitHub para publicarlo.');$('#ppw').value=''};
 $('#pcopy').onclick=async()=>{let t;try{t=await datosJS()}catch(e){pm(e.message,false);return}try{await navigator.clipboard.writeText(t);pm('Copiado y cifrado. Pégalo en datos.js de GitHub.');$('#ppw').value=''}catch(e){pm('No se pudo copiar; usa “Descargar datos.js”.',false)}};
 document.querySelectorAll('[data-go]').forEach(a=>a.onclick=e=>{e.preventDefault();go(a.dataset.go)});
+
+const GK='presupuesto_gh';let GH={u:'jigr1028-beep',r:'presupuesto-mensual-llyasa',b:'main',t:''};
+try{Object.assign(GH,JSON.parse(localStorage.getItem(GK)||'{}'))}catch(e){}
+const ghFill=()=>{$('#gh_u').value=GH.u;$('#gh_r').value=GH.r;$('#gh_b').value=GH.b;$('#gh_t').value=GH.t};ghFill();
+const ghH=()=>({'Authorization':'Bearer '+GH.t,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'});
+const ghU=p=>'https://api.github.com/repos/'+encodeURIComponent(GH.u)+'/'+encodeURIComponent(GH.r)+p;
+const ghRead=()=>{GH={u:$('#gh_u').value.trim(),r:$('#gh_r').value.trim(),b:$('#gh_b').value.trim()||'main',t:$('#gh_t').value.trim()}};
+const gm=(t,ok=true)=>{$('#ghmsg').style.color=ok?'var(--good)':'var(--crit)';$('#ghmsg').textContent=t};
+function ghErr(res){const c=res.status;if(c===401)return'El token no es válido o ya venció.';if(c===403)return'El token no tiene permiso de escritura (Contents: Read and write) en este repositorio.';if(c===404)return'No encuentro el repositorio, la rama o el archivo. Revisa usuario, repositorio y que el token tenga acceso a él.';if(c===409||c===422)return'Alguien publicó antes que tú. Recarga la página y vuelve a intentar.';return'GitHub respondió '+c+'.'}
+$('#gh_save').onclick=async()=>{ghRead();if(!GH.u||!GH.r||!GH.t){gm('Completa usuario, repositorio y token.',false);return}
+ try{const res=await fetch(ghU('/contents/datos.js?ref='+encodeURIComponent(GH.b)),{headers:ghH(),cache:'no-store'});if(!res.ok){gm(ghErr(res),false);return}
+  localStorage.setItem(GK,JSON.stringify(GH));gm('Conexión correcta. El permiso de escritura se confirma al publicar.')}catch(e){gm('No se pudo conectar con GitHub.',false)}};
+$('#gh_clear').onclick=()=>{GH.t='';try{localStorage.setItem(GK,JSON.stringify(GH))}catch(e){}ghFill();gm('Token quitado de este navegador.')};
+$('#ppub').onclick=async()=>{ghRead();if(!GH.u||!GH.r||!GH.t){$('#ghbox').open=true;pm('Primero conecta GitHub (una sola vez) en el recuadro de abajo.',false);return}
+ let txt;try{txt=await datosJS()}catch(e){pm(e.message,false);return}
+ pm('Publicando…');
+ try{let sha;const g=await fetch(ghU('/contents/datos.js?ref='+encodeURIComponent(GH.b)),{headers:ghH(),cache:'no-store'});
+  if(g.ok)sha=(await g.json()).sha;else if(g.status!==404){pm(ghErr(g),false);return}
+  const body={message:'Actualizar datos '+new Date().toISOString().slice(0,10),content:btoa(unescape(encodeURIComponent(txt))),branch:GH.b};if(sha)body.sha=sha;
+  const p=await fetch(ghU('/contents/datos.js'),{method:'PUT',headers:{...ghH(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!p.ok){pm(ghErr(p),false);return}
+  try{localStorage.setItem(GK,JSON.stringify(GH))}catch(e){}
+  $('#ppw').value='';pm('Publicado. En uno o dos minutos todos verán los cambios (recarga con Ctrl+F5).')}catch(e){pm('No se pudo conectar con GitHub.',false)}};
 params();update();go((location.hash||'').slice(1));
 </script>
 <script>
