@@ -77,7 +77,7 @@ tfoot td{font-weight:700;border-bottom:0;border-top:2px solid var(--line)}
 .cal td.hi{background:var(--warn-bg)}.cal td.sel{box-shadow:inset 0 0 0 1.5px var(--meta)}
 .cb{position:relative}.tip{position:absolute;top:8px;pointer-events:none;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:12px;box-shadow:0 6px 18px rgba(4,44,83,.2);white-space:nowrap;z-index:2}
 .tip b{display:block;margin-bottom:2px}.tip i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
-.tr{display:flex;justify-content:space-between;gap:18px}.tr span:first-child{color:var(--fg2)}.tip .tx{border-top:1px solid var(--line);margin-top:6px;padding-top:6px;min-width:250px}
+.tcols{display:flex;gap:16px;align-items:flex-start}.tcols .tx{min-width:236px}.tcols .tx+.tx{border-left:1px solid var(--line);padding-left:16px}.tr{display:flex;justify-content:space-between;gap:18px}.tr span:first-child{color:var(--fg2)}.tip .tx{border-top:1px solid var(--line);margin-top:6px;padding-top:6px;min-width:250px}
 .gin{width:76px;font:inherit;font-variant-numeric:tabular-nums;text-align:right;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
 .gin.man{border-color:var(--meta);background:var(--warn-bg)}
 .manual{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}.manual .top{display:flex;justify-content:space-between;align-items:baseline}
@@ -97,7 +97,7 @@ footer{border-top:1px solid var(--line);padding:18px 16px 26px;color:var(--fg2)}
 <div class="sub"><div><h1>Presupuesto mensual por ejecutivo</h1><div class="lead">Base histórica del mismo mes, proyección de los últimos 3 meses y un crecimiento mínimo. <span id="hasta">Venta 2024, 2025 y 2026 hasta septiembre.</span></div></div>
  <div style="display:flex;gap:10px;align-items:center"><label for="mes" style="color:var(--fg2)">Mes a presupuestar</label><select id="mes"></select></div></div>
 
-<div class="notice" id="draft" hidden style="margin-bottom:12px"><b>Sin publicar</b><div>Tienes cambios en este navegador que los demás no ven. Ve a <a href="#datos" data-go="datos">Captura de ventas</a> y descarga el <b style="color:inherit">datos.js</b> para subirlo a GitHub.</div></div>
+<div class="notice" id="draft" hidden style="margin-bottom:12px"><b>Sin publicar</b><div>Tienes cambios en este navegador que los demás no ven. Ve a <a href="#datos" data-go="datos">Captura de ventas</a> y presiona <b style="color:inherit">Publicar ahora</b>.</div></div>
 <main style="display:contents">
 <section class="view" id="v-resumen">
  <div class="notice" id="notice"><b>Dato pendiente</b><div id="noticeT">EJECUTIVO3 no tiene captura de agosto ni septiembre 2026. Para él, “últimos 3 meses” son mayo, junio y julio.</div></div>
@@ -235,7 +235,18 @@ function lineChart(el,W,H,series,opt){const L=44,R=14,T=12,B=26;const all=series
   const tx=x(i)/W*r.width;tip.style.left=(tx>r.width*.6?tx-tip.offsetWidth-14:tx+14)+'px'};
  cb.onmouseleave=()=>{tip.hidden=true;cr.style.display='none'}}
 let chartMode='co';
-function tipBlock(mode,i){const k=TS.findIndex(t=>t%12===i);if(k<0)return'';const t=TS[k];let m,sg=null;
+function closeBlock(mode,i){const t=24+i;if(t>CUT)return'';
+ const idx=mode==='co'?ALL.map((_,j)=>j):[mode];const has=idx.filter(j=>ALL[j][t]!=null);if(!has.length)return'';
+ const sum=f=>has.reduce((a,j)=>a+f(j),0);
+ const A=sum(j=>ALL[j][t]),Y1=sum(j=>ALL[j][t-12]??0),Y2=sum(j=>ALL[j][t-24]??0);
+ const Bg=sum(j=>calc(ALL[j],t-1,i,t-12,t-24).b);
+ let a26=0,a25=0,a24=0;has.forEach(j=>{for(let m=0;m<=i;m++){if(ALL[j][24+m]==null)continue;a26+=ALL[j][24+m];a25+=ALL[j][12+m]??0;a24+=ALL[j][m]??0}});
+ const dK=v=>(v>=0?'+':'−')+K(Math.abs(v));
+ const r=(l,v,c)=>`<div class="tr"><span>${l}</span><span class="num ${c||''}">${v}</span></div>`;
+ const cum=A/Bg;
+ return `<div class="tx"><b>Cómo cerramos ${lab(t)}${mode==='co'?' · compañía':''}</b>${r('Vendido '+lab(t),K(A))}${r('vs '+lab(t-12),P1(A/Y1-1)+' ('+dK(A-Y1)+')',cls(A/Y1-1))}${r('vs '+lab(t-24),P1(A/Y2-1)+' ('+dK(A-Y2)+')',cls(A/Y2-1))}${r('Presupuesto con la regla*',K(Bg))}${r('Cumplimiento',(cum*100).toFixed(0)+'%',cum>=1?'pos':cum<.85?'neg':'')}<div class="tr" style="border-top:1px dashed var(--line);margin-top:4px;padding-top:4px;font-weight:600"><span style="color:var(--fg)">Acumulado ene–${MN[i].toLowerCase()} 2026</span><span class="num">${K(a26)}</span></div>${r('vs mismo periodo 2025',P1(a26/a25-1),cls(a26/a25-1))}${r('vs mismo periodo 2024',P1(a26/a24-1),cls(a26/a24-1))}<div style="font-size:10.5px;color:var(--fg3);margin-top:4px">*Regla aplicada con la información hasta ${lab(t-1)}</div></div>`}
+function tipBlock(mode,i){const c=closeBlock(mode,i);return c?`<div class="tcols">${c}${tipBlock0(mode,i)}</div>`:tipBlock0(mode,i)}
+function tipBlock0(mode,i){const k=TS.findIndex(t=>t%12===i);if(k<0)return'';const t=TS[k];let m,sg=null;
  if(mode==='co'){const sm=f=>ROWS.reduce((a,o)=>a+(o.months[k][f]||0),0);m={B:sm('B'),A:sm('A'),base:sm('base'),proj:sm('proj'),fin:sm('fin'),b:sm('b'),L:sm('L'),use:null,g:sm('b')/sm('fin')-1};}
  else{const o=ROWS[mode];m=o.months[k];sg=o.sug}
  const r=(l,v,c)=>`<div class="tr"><span>${l}</span><span class="num ${c||''}">${v}</span></div>`;
