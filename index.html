@@ -362,7 +362,7 @@ function texts(){$('#hasta').textContent='Venta 2024, 2025 y 2026 hasta '+lab(CU
  $('#chint').textContent=`Cada línea es un año. La naranja es el presupuesto de ${lab(TS[0])} a ${lab(TS[11])}. Pasa el mouse por un mes para ver todas las columnas del presupuesto.`;
  $('#calh').textContent=`Presupuesto por ejecutivo de ${lab(TS[0])} a ${lab(TS[11])}, en miles de pesos. En ámbar, lo que supera 30% al mismo mes del año anterior. Incluye tus ajustes manuales.`;
  $('#bth').textContent=`Corrí la misma regla como si estuviéramos a fin de ${L[0]}, ${L[1]} y ${L[2]}, con solo la información de entonces, y la comparé con la venta real y con el mismo mes de los dos años anteriores.`;
- const miss=RAW.filter((r,i)=>ALL[i][CUT]==null).map(r=>r.n);
+ const SIN_CAPTURA=['EJECUTIVO3'];const miss=RAW.filter((r,i)=>ALL[i][CUT]==null&&!SIN_CAPTURA.includes(r.n)).map(r=>r.n);
  $('#notice').hidden=!miss.length;if(miss.length)$('#noticeT').textContent=`${miss.join(', ')} no ${miss.length>1?'tienen':'tiene'} captura de ${lab(CUT)}. Para ${miss.length>1?'ellos':'él'}, “últimos 3 meses” son los 3 más recientes con dato. ${ADMIN?'Puedes completarlo en Captura de ventas.':''}`}
 const fmtMX=v=>'$'+Math.round(v).toLocaleString('es-MX');
 let dT=CUT+1;
