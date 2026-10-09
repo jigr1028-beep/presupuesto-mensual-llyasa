@@ -1,22 +1,21 @@
-[README.md](https://github.com/user-attachments/files/33127719/README.md)
+[README.md](https://github.com/user-attachments/files/33257932/README.md)
 # Presupuesto mensual LLYASA
 
 - `index.html`: la aplicación (no cambia cada mes).
 - `datos.js`: ventas, ajustes y parámetros, **cifrados con contraseña**. Es lo único que cambia.
 
+## Modo edición (solo para quien administra)
+El sitio abre en **solo lectura** para el equipo: sin captura, sin ajustes y sin publicar.
+Para editar, haz **tres clics seguidos en el título** "Presupuesto mensual por ejecutivo". Aparecen los botones y el navegador
+se queda en modo edición. Tres clics más lo desactivan. También funciona abriendo el sitio con `?editar` al final de la dirección.
+
 ## Actualización mensual
-1. Abre el sitio, escribe la contraseña, entra a **Captura de ventas**, pega las ventas y presiona **Aplicar captura**.
-2. En **Publicar para todos** presiona **Publicar ahora**. El archivo se cifra y se guarda directo en GitHub.
+1. En modo edición, entra a **Captura de ventas**, pega las ventas y presiona **Aplicar captura**.
+2. En **Publicar para todos** presiona **Publicar ahora** (necesita el token de GitHub guardado en tu navegador).
 3. En uno o dos minutos el sitio se actualiza (recarga con Ctrl+F5).
 
-Primera vez: en **Conexión con GitHub** captura usuario, repositorio, rama y un token fine-grained con permiso
-*Contents: Read and write* solo sobre este repositorio. El token se guarda únicamente en ese navegador.
+## Seguridad
+Ocultar los botones es solo orden, no seguridad. Lo que impide que otros cambien los datos publicados es el **token de GitHub**
+(solo está en tu navegador) y los permisos del repositorio. Quien agregue `?editar` solo verá los botones; sus cambios no llegan a nadie.
 
-Sin token: **Descargar datos.js** y súbelo en *Add file → Upload files* (reemplaza al anterior).
-
-## Cambiar la contraseña
-Escribe la nueva (mínimo 10 caracteres) en el campo de contraseña antes de publicar y avisa a tu equipo.
-
-## Importante
-- Nunca subas un `datos.js` sin cifrar (el que empieza con `window.DATOS=`). El cifrado lo genera siempre el dashboard.
-- Cada publicación queda en el historial del repositorio (pestaña *History* del archivo).
+Nunca subas un `datos.js` sin cifrar (el que empieza con `window.DATOS=`).
