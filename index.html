@@ -151,6 +151,8 @@ footer{border-top:1px solid var(--line);padding:18px 16px 26px;color:var(--fg2)}
   <div class="params" style="margin-top:12px" id="params"></div></div>
 <div class="card adm"><h2>Respaldo</h2><div class="hint" style="margin:0 0 10px">Tus ajustes de crecimiento y las ventas capturadas viven en este navegador. Descarga un respaldo para guardarlo o llevarlo a otra computadora, y cárgalo ahí para continuar.</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" id="bdown" class="btn">Descargar respaldo</button><button type="button" id="bup" class="reset">Cargar respaldo</button><input type="file" id="bfile" accept=".json,application/json" hidden><button type="button" id="bexit" class="reset">Salir del modo edición</button><button type="button" id="bwipe" class="reset">Descartar cambios sin publicar</button><span id="bmsg" role="status" style="font-size:12.5px;color:var(--good)"></span></div></div>
+<div class="card adm"><h2>Ventas corregidas y referencia anterior</h2><div class="hint" style="margin:0 0 10px"><b style="color:inherit">Importar ventas:</b> carga el archivo <code>ventas_nuevas.json</code> y reemplaza las ventas 2024-2026 de todos los ejecutivos (los ajustes de crecimiento se conservan). Después presiona <b style="color:inherit">Publicar ahora</b>. Al publicar, las ventas y presupuestos anteriores se guardan como referencia dentro de los datos cifrados; <b style="color:inherit">Descargar referencia anterior</b> baja un CSV con ellos.</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" id="iup" class="btn">Importar ventas corregidas</button><input type="file" id="ifile" accept=".json,application/json" hidden><button type="button" id="iref" class="reset">Descargar referencia anterior</button><span id="imsg" role="status" style="font-size:12.5px;color:var(--good)"></span></div></div>
 </section>
 </main>
 </div>
@@ -178,9 +180,9 @@ const DEF={grow:.01,cap:.20,win:3,lim:null,sugCap:.15};
 let P={...DEF,...(DATOS.motor||{})};
 const EX_KEY='presupuesto_ventas_v1';
 const DK='presupuesto_borrador_v2';
-let OV=JSON.parse(JSON.stringify(DATOS.ajustes||{})),EX={};
-try{const d=JSON.parse(localStorage.getItem(DK)||'null');if(d&&d.base===DATOS.version){OV=d.OV||{};EX=d.EX||{};if(d.P)P={...DEF,...d.P}}}catch(e){}
-const saveDraft=()=>{try{localStorage.setItem(DK,JSON.stringify({base:DATOS.version,OV,EX,P}))}catch(e){}};
+let OV=JSON.parse(JSON.stringify(DATOS.ajustes||{})),EX={},IMP=false;
+try{const d=JSON.parse(localStorage.getItem(DK)||'null');if(d&&d.base===DATOS.version){OV=d.OV||{};EX=d.EX||{};IMP=!!d.IMP;if(d.P)P={...DEF,...d.P}}}catch(e){}
+const saveDraft=()=>{try{localStorage.setItem(DK,JSON.stringify({base:DATOS.version,OV,EX,P,IMP}))}catch(e){}};
 const saveEX=saveDraft;
 let ALL=[],CUT=32;
 function buildAll(){ALL=RAW.map(r=>{const s=[...r.y24,...r.y25,...r.y26];const e=EX[r.n]||{};for(const k in e)s[+k]=e[k];for(let t=0;t<s.length;t++)if(s[t]===undefined)s[t]=null;return s});CUT=0;ALL.forEach(s=>s.forEach((v,t)=>{if(v!=null&&t>CUT)CUT=t}))}
@@ -385,8 +387,25 @@ $('#bdown').onclick=()=>{const d=new Date(),f=d.getFullYear()+'-'+String(d.getMo
 $('#bup').onclick=()=>$('#bfile').click();
 $('#bfile').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);if(!j||j.v!==1||typeof j.ajustes!=='object'||typeof j.ventas!=='object')throw 0;
   OV=j.ajustes||{};EX=j.ventas||{};if(j.motor&&typeof j.motor==='object')P={...DEF,...j.motor};saveOV();saveEX();rebuild();bm('Respaldo cargado: '+Object.keys(OV).length+' ajustes y ventas de '+Object.keys(EX).length+' ejecutivos.')}catch(err){bm('El archivo no es un respaldo válido.',false)}e.target.value=''};rd.readAsText(f)};
-$('#bwipe').onclick=()=>{if(!confirm('Se borrarán los cambios sin publicar de este navegador (ajustes y ventas capturadas). ¿Continuar?'))return;OV=JSON.parse(JSON.stringify(DATOS.ajustes||{}));EX={};P={...DEF,...(DATOS.motor||{})};saveDraft();rebuild();bm('Borrados los cambios sin publicar. Vuelves a lo publicado.')};
+$('#bwipe').onclick=()=>{if(!confirm('Se borrarán los cambios sin publicar de este navegador (ajustes y ventas capturadas). ¿Continuar?'))return;OV=JSON.parse(JSON.stringify(DATOS.ajustes||{}));EX={};IMP=false;P={...DEF,...(DATOS.motor||{})};saveDraft();rebuild();bm('Borrados los cambios sin publicar. Vuelves a lo publicado.')};
 datosOpts();datosRender();texts();
+
+function snapRAW(){return RAW.map(r=>({n:r.n,seg:r.seg,y24:r.y24,y25:r.y25,y26:r.y26}))}
+function refData(){if(DATOS.ref)return DATOS.ref;if(IMP)return{fecha:DATOS.version,nota:'Ventas y presupuestos con el archivo inicial (Motor de Metas v16), antes de la corrección de ventas.',ventas:snapRAW()};return null}
+const im=(t,ok=true)=>{$('#imsg').style.color=ok?'var(--good)':'var(--crit)';$('#imsg').textContent=t};
+$('#iup').onclick=()=>$('#ifile').click();
+$('#ifile').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);if(!j||j.tipo!=='ventas'||typeof j.ventas!=='object')throw 0;
+  const nx={};let n=0;RAW.forEach(r=>{const a=j.ventas[r.n];if(!a)return;nx[r.n]={};a.forEach((v,t)=>{nx[r.n][t]=(v==null?null:Math.round(v))});n++});
+  if(n<RAW.length&&!confirm('El archivo trae '+n+' de '+RAW.length+' ejecutivos; los demás conservan sus ventas actuales. ¿Continuar?'))return;
+  EX=nx;IMP=true;saveDraft();rebuild();im('Ventas importadas ('+n+' ejecutivos, hasta '+lab(CUT)+'). Revisa y presiona Publicar ahora.')}catch(err){im('El archivo no es válido.',false)}e.target.value=''};rd.readAsText(f)};
+$('#iref').onclick=()=>{const R=DATOS.ref||(IMP?{fecha:DATOS.version,ventas:snapRAW()}:{fecha:DATOS.version,ventas:snapRAW()});
+  const S=R.ventas.map(r=>[...r.y24,...r.y25,...r.y26]);let c=0;S.forEach(s=>s.forEach((v,t)=>{if(v!=null&&t>c)c=t}));
+  const q=v=>v==null?'':Math.round(v);const L=[];
+  L.push('REFERENCIA - presupuesto anterior (con '+lab(c)+' como ultimo mes)');L.push(['Ejecutivo',...[...Array(12).keys()].map(i=>lab(c+1+i))].join(','));
+  R.ventas.forEach((r,i)=>{L.push([r.n,...[...Array(12).keys()].map(k=>{const t=c+1+k;return q(calc(S[i],c,t%12,t-12,t-24).b)})].join(','))});
+  L.push('');L.push('REFERENCIA - ventas anteriores');L.push(['Ejecutivo',...[...Array(c+1).keys()].map(lab)].join(','));
+  R.ventas.forEach((r,i)=>{L.push([r.n,...S[i].slice(0,c+1).map(q)].join(','))});
+  const blob=new Blob(['\ufeff'+L.join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='referencia_anterior.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);im('Referencia descargada.')};
 
 const b64e=u=>btoa(String.fromCharCode(...u));
 async function encPayload(obj,pw){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),iter=600000;
@@ -398,7 +417,8 @@ async function datosJS(){const ver=new Date().toISOString();
  const npw=$('#ppw').value,pw=npw||window.PWD;
  if(!pw)throw new Error('Escribe una contraseña para cifrar el archivo.');
  if(npw&&npw.length<10)throw new Error('La contraseña debe tener al menos 10 caracteres.');
- const obj={version:ver,motor:P,ajustes:OV,ventas:RAW.map((r,i)=>({n:r.n,seg:r.seg,y24:r.y24,y25:r.y25,y26:ALL[i].slice(24,CUT+1)}))};
+ const obj={version:ver,motor:P,ajustes:OV,ventas:RAW.map((r,i)=>({n:r.n,seg:r.seg,y24:ALL[i].slice(0,12),y25:ALL[i].slice(12,24),y26:ALL[i].slice(24,CUT+1)}))};
+ const rf=refData();if(rf)obj.ref=rf;
  const out=await encPayload(obj,pw);window.PWD=pw;return out}
 function datosJSold(){const ver=new Date().toISOString();
  const rows=RAW.map((r,i)=>' {"n":'+JSON.stringify(r.n)+',"seg":'+JSON.stringify(r.seg)+',"y24":'+JSON.stringify(r.y24)+',"y25":'+JSON.stringify(r.y25)+',"y26":'+JSON.stringify(ALL[i].slice(24,CUT+1))+'}');
