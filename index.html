@@ -173,7 +173,8 @@ footer{border-top:1px solid var(--line);padding:18px 16px 26px;color:var(--fg2)}
 let ADMIN=false;try{if(/[?&#]editar/.test(location.search+location.hash))localStorage.setItem('presupuesto_admin','1');ADMIN=localStorage.getItem('presupuesto_admin')==='1'}catch(e){}
 document.body.classList.toggle('admin',ADMIN);
 
-const RAW=DATOS.ventas;
+const QUITAR=['EJECUTIVO3'];
+const RAW=DATOS.ventas.filter(r=>!QUITAR.includes(r.n));
 const $=s=>document.querySelector(s);
 const MN=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const DEF={grow:.01,cap:.20,win:3,lim:null,sugCap:.15};
@@ -390,7 +391,7 @@ $('#bfile').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new Fil
 $('#bwipe').onclick=()=>{if(!confirm('Se borrarán los cambios sin publicar de este navegador (ajustes y ventas capturadas). ¿Continuar?'))return;OV=JSON.parse(JSON.stringify(DATOS.ajustes||{}));EX={};IMP=false;P={...DEF,...(DATOS.motor||{})};saveDraft();rebuild();bm('Borrados los cambios sin publicar. Vuelves a lo publicado.')};
 datosOpts();datosRender();texts();
 
-function snapRAW(){return RAW.map(r=>({n:r.n,seg:r.seg,y24:r.y24,y25:r.y25,y26:r.y26}))}
+function snapRAW(){return DATOS.ventas.map(r=>({n:r.n,seg:r.seg,y24:r.y24,y25:r.y25,y26:r.y26}))}
 function refData(){if(DATOS.ref)return DATOS.ref;if(IMP)return{fecha:DATOS.version,nota:'Ventas y presupuestos con el archivo inicial (Motor de Metas v16), antes de la corrección de ventas.',ventas:snapRAW()};return null}
 const im=(t,ok=true)=>{$('#imsg').style.color=ok?'var(--good)':'var(--crit)';$('#imsg').textContent=t};
 $('#iup').onclick=()=>$('#ifile').click();
