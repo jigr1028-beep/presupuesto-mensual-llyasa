@@ -107,7 +107,7 @@ footer{border-top:1px solid var(--line);padding:18px 16px 26px;color:var(--fg2)}
   <div class="legend"><span><i style="background:var(--c24)"></i>2024</span><span><i style="background:var(--c25)"></i>2025</span><span><i style="background:var(--c26)"></i>2026</span><span><i style="background:var(--meta)"></i>Presupuesto</span></div><div id="chart"></div></section>
  <aside class="card" id="detail"></aside>
  <section class="card"><h2 id="ttl">Presupuesto por ejecutivo</h2><div class="hint">Haz clic en una fila para ver el paso a paso arriba y en la gráfica. <span class="adm">Cambia el Crec. % de cualquier fila para subir o bajar su meta.</span> “Prom. 3M” es lo que vendió en sus últimos 3 meses con dato.</div>
-  <div class="bar" style="justify-content:flex-start;margin-bottom:10px"><div class="seg" id="seg"><button type="button" data-s="ALL" aria-pressed="true">Todos</button><button type="button" data-s="TYCMORS" aria-pressed="false">TYCMORS</button><button type="button" data-s="NACIONALES" aria-pressed="false">NACIONALES</button></div></div>
+  <div class="bar" style="justify-content:flex-start;margin-bottom:10px"><div class="seg" id="seg"><button type="button" data-s="ALL" aria-pressed="true">Todos</button><button type="button" data-s="TYCMORS" aria-pressed="false">TYCMORS</button><button type="button" data-s="NACIONALES" aria-pressed="false">NACIONALES</button><button type="button" data-s="MAYOREO" aria-pressed="false">MAYOREO</button></div></div>
   <div class="tw"><table><thead><tr><th class="l">Ejecutivo</th><th id="hB">2024</th><th id="hA">2025</th><th>Base</th><th>Proyección 3M</th><th class="l">Se usa</th><th>Crec. %</th><th class="adm">Sugerido</th><th>Presupuesto</th><th id="hVA">vs 2025</th><th id="hVB">vs 2024</th><th>vs Prom. 3M</th></tr></thead><tbody id="tb"></tbody><tfoot id="tf"></tfoot></table></div></section>
 </section>
 
@@ -174,7 +174,8 @@ let ADMIN=false;try{if(/[?&#]editar/.test(location.search+location.hash))localSt
 document.body.classList.toggle('admin',ADMIN);
 
 const QUITAR=['EJECUTIVO3'];
-const RAW=DATOS.ventas.filter(r=>!QUITAR.includes(r.n));
+const SEGMAY=['MAYOREO','VENTAS22'];
+const RAW=DATOS.ventas.filter(r=>!QUITAR.includes(r.n)).map(r=>SEGMAY.includes(r.n)?{...r,seg:'MAYOREO'}:r);
 const $=s=>document.querySelector(s);
 const MN=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const DEF={grow:.01,cap:.20,win:3,lim:null,sugCap:.15};
