@@ -173,7 +173,7 @@ footer{border-top:1px solid var(--line);padding:18px 16px 26px;color:var(--fg2)}
 let ADMIN=false;try{if(/[?&#]editar/.test(location.search+location.hash))localStorage.setItem('presupuesto_admin','1');ADMIN=localStorage.getItem('presupuesto_admin')==='1'}catch(e){}
 document.body.classList.toggle('admin',ADMIN);
 
-const QUITAR=['EJECUTIVO3'];
+const QUITAR=['EJECUTIVO3','VENTAS26'];
 const SEGMAY=['MAYOREO','VENTAS22'];
 const RAW=DATOS.ventas.filter(r=>!QUITAR.includes(r.n)).map(r=>SEGMAY.includes(r.n)?{...r,seg:'MAYOREO'}:r);
 const $=s=>document.querySelector(s);
