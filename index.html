@@ -5,17 +5,17 @@
 :root{
   --bg:#fff;--surface:#fff;--surface2:#f4f7fb;--line:#dee2e6;--fg:#212529;--fg2:#495057;--fg3:#6c757d;
   --brand:#0652ca;--brand-ink:#fff;--navy:#042c53;--tabtext:#8db8ff;--accent:#eaae29;
-  --c24:#8e949f;--c25:#6f8fbf;--c26:#042c53;--meta:#e0662a;
+  --c24:#6a4fcf;--c25:#0f9a66;--c26:#0652ca;--meta:#e0662a;
   --good:#117a47;--good-bg:#e3f4ea;--warn:#8a5a00;--warn-bg:#fdf1d6;--crit:#b3261e;--crit-bg:#fde8e6;
   --sans:'Ubuntu',system-ui,-apple-system,'Segoe UI',sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0a1424;--surface:#101c31;--surface2:#15233b;--line:#25354f;--fg:#e8eef8;--fg2:#b3c0d4;--fg3:#8696ae;
-  --brand:#2f7bf0;--navy:#0a2748;--tabtext:#8db8ff;--c24:#8b919c;--c25:#7f9ac2;--c26:#9cc4ff;--meta:#f08a50;
+  --brand:#2f7bf0;--navy:#0a2748;--tabtext:#8db8ff;--c24:#a99dff;--c25:#3fcf9b;--c26:#5b9bf0;--meta:#f08a50;
   --good:#5fd39a;--good-bg:#12301f;--warn:#f0c15a;--warn-bg:#352a0c;--crit:#ff8b83;--crit-bg:#3a1613;color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0a1424;--surface:#101c31;--surface2:#15233b;--line:#25354f;--fg:#e8eef8;--fg2:#b3c0d4;--fg3:#8696ae;
-  --brand:#2f7bf0;--navy:#0a2748;--tabtext:#8db8ff;--c24:#8b919c;--c25:#7f9ac2;--c26:#9cc4ff;--meta:#f08a50;
+  --brand:#2f7bf0;--navy:#0a2748;--tabtext:#8db8ff;--c24:#a99dff;--c25:#3fcf9b;--c26:#5b9bf0;--meta:#f08a50;
   --good:#5fd39a;--good-bg:#12301f;--warn:#f0c15a;--warn-bg:#352a0c;--crit:#ff8b83;--crit-bg:#3a1613;color-scheme:dark}
 *{box-sizing:border-box}[hidden]{display:none!important}body:not(.admin) .adm{display:none!important}body:not(.admin) .gin{border:0;background:transparent;pointer-events:none;appearance:textfield;-moz-appearance:textfield;padding:0;text-align:right}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.45;margin:0}
@@ -104,7 +104,7 @@ footer{border-top:1px solid var(--line);padding:18px 16px 26px;color:var(--fg2)}
  <section class="kpis" id="kpis"></section>
  <div class="ovbar adm" id="ovbar"></div>
  <section class="card"><div class="bar" style="align-items:flex-start"><div><h2 id="ctitle">La compañía por mes calendario</h2><div class="hint" id="chint">Cada línea es un año. La naranja es el presupuesto de octubre 2026 a septiembre 2027. Pasa el mouse por un mes para ver todas las columnas del presupuesto.</div></div><div style="display:flex;gap:8px;align-items:center"><label for="cview" style="color:var(--fg2)">Ver</label><select id="cview"></select></div></div>
-  <div class="legend"><span><i style="background:repeating-linear-gradient(90deg,var(--c24) 0 5px,transparent 5px 8px)"></i>2024</span><span><i style="background:var(--c25)"></i>2025</span><span><i style="background:var(--c26)"></i>2026</span><span><i style="background:repeating-linear-gradient(90deg,var(--meta) 0 7px,transparent 7px 10px)"></i>Presupuesto</span></div><div id="chart"></div></section>
+  <div class="legend"><span><i style="background:var(--c24)"></i>2024</span><span><i style="background:var(--c25)"></i>2025</span><span><i style="background:var(--c26)"></i>2026</span><span><i style="background:var(--meta)"></i>Presupuesto</span></div><div id="chart"></div></section>
  <aside class="card" id="detail"></aside>
  <section class="card"><h2 id="ttl">Presupuesto por ejecutivo</h2><div class="hint">Haz clic en una fila para ver el paso a paso arriba y en la gráfica. <span class="adm">Cambia el Crec. % de cualquier fila para subir o bajar su meta.</span> “Prom. 3M” es lo que vendió en sus últimos 3 meses con dato. En meses cerrados, el cumplimiento y la comparación contra años anteriores van en <span class="pill p-good">verde</span> si llegó al 100%, <span class="pill p-warn">ámbar</span> si quedó a menos de 5% y <span class="pill p-crit">rojo</span> si quedó más abajo (contra otros años: verde si igualó o superó, ámbar si bajó menos de 5%, rojo si bajó más).</div>
   <div class="bar" style="justify-content:flex-start;margin-bottom:10px"><div class="seg" id="seg"><button type="button" data-s="ALL" aria-pressed="true">Todos</button><button type="button" data-s="TYCMORS" aria-pressed="false">TYCMORS</button><button type="button" data-s="NACIONALES" aria-pressed="false">NACIONALES</button><button type="button" data-s="MAYOREO" aria-pressed="false">MAYOREO</button><button type="button" data-s="CMORS" aria-pressed="false">CMORS</button></div></div>
@@ -226,26 +226,22 @@ function params(){
  $('#p_grow').oninput=e=>{P.grow=+e.target.value;update()};$('#p_cap').oninput=e=>{P.cap=+e.target.value;update()};$('#p_win').oninput=e=>{P.win=+e.target.value;update()};
  $('#p_sug').oninput=e=>{P.sugCap=+e.target.value;update()};$('#p_lim').onchange=e=>{P.lim=e.target.value===''?null:+e.target.value;update()};syncParams()}
 function syncParams(){$('#p_grow').value=P.grow;$('#v_grow').textContent=Math.round(P.grow*1000)/10+'%';$('#p_cap').value=P.cap;$('#v_cap').textContent='±'+Math.round(P.cap*100)+'%';$('#p_win').value=P.win;$('#v_win').textContent=P.win;$('#p_lim').value=P.lim==null?'':P.lim;$('#p_sug').value=P.sugCap;$('#v_sug').textContent=Math.round(P.sugCap*100)+'%'}
-function lineChart(el,W,H,series,opt){const L=44,R=opt.R||14,T=12,B=26;const all=series.flatMap(q=>q.v.filter(v=>v!=null));let mn=Math.min(...all),mx=Math.max(...all);const pad=(mx-mn)*.08||1;mn=Math.max(0,mn-pad);mx+=pad;
+function lineChart(el,W,H,series,opt){const L=44,R=14,T=12,B=26;const all=series.flatMap(q=>q.v.filter(v=>v!=null));let mn=Math.min(...all),mx=Math.max(...all);const pad=(mx-mn)*.08||1;mn=Math.max(0,mn-pad);mx+=pad;
  const x=i=>L+i*(W-L-R)/11,y=v=>H-B-(v-mn)/(mx-mn)*(H-B-T);let g=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${opt.label}">`;
  for(let k=0;k<4;k++){const v=mn+(mx-mn)*k/3;g+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end">${opt.fmt(v)}</text>`}
  MN.forEach((m,i)=>g+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle" ${i===opt.hl?'style="fill:var(--fg);font-weight:600"':''}>${m}</text>`);
  if(opt.hl!=null)g+=`<rect x="${x(opt.hl)-12}" y="${T}" width="24" height="${H-B-T}" fill="var(--meta)" opacity=".12"/>`;
  g+=`<line class="cross" y1="${T}" y2="${H-B}" stroke="var(--fg3)" stroke-dasharray="3 3" style="display:none"/>`;
- series.forEach((q,k)=>{let d='',pen=false;q.v.forEach((v,i)=>{if(v==null){pen=false;return}d+=(pen?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1);pen=true});
-  g+=`<path data-k="${k}" d="${d}" fill="none" stroke="${q.c}" stroke-width="${q.w||2.5}" ${q.da?`stroke-dasharray="${q.da}"`:''} stroke-linejoin="round" stroke-linecap="round"/>`;
-  q.v.forEach((v,i)=>{if(v!=null)g+=`<circle data-k="${k}" cx="${x(i)}" cy="${y(v)}" r="${i===opt.hl?(q.r||3.2)+2.8:(q.r||3.2)}" fill="${q.c}" stroke="var(--surface)" stroke-width="1.5"/>`})});
- if(opt.lbl){const ls=series.map((q,k)=>{let li=-1;q.v.forEach((v,i)=>{if(v!=null)li=i});return li<0?null:{k,q,i:li,y:y(q.v[li])}}).filter(Boolean).sort((a,b)=>a.y-b.y);
-  for(let j=1;j<ls.length;j++)if(ls[j].y-ls[j-1].y<14)ls[j].y=ls[j-1].y+14;
-  ls.forEach(l=>{g+=`<text data-k="${l.k}" x="${x(l.i)+9}" y="${l.y+4}" style="fill:${l.q.c};font-weight:700;font-size:12px">${l.q.name}</text>`})}
+ series.forEach(q=>{let d='',pen=false;q.v.forEach((v,i)=>{if(v==null){pen=false;return}d+=(pen?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1);pen=true});
+  g+=`<path d="${d}" fill="none" stroke="${q.c}" stroke-width="${q.w||2.5}" stroke-linejoin="round" stroke-linecap="round"/>`;
+  q.v.forEach((v,i)=>{if(v!=null)g+=`<circle cx="${x(i)}" cy="${y(v)}" r="${i===opt.hl?6:3.2}" fill="${q.c}" stroke="var(--surface)" stroke-width="1.5"/>`})});
  g+='</svg>';el.innerHTML=`<div class="cb">${g}<div class="tip" hidden></div></div>`;
  const cb=el.firstChild,sv=cb.querySelector('svg'),tip=cb.querySelector('.tip'),cr=sv.querySelector('.cross');
- const hi=k=>sv.querySelectorAll('[data-k]').forEach(n=>{const on=k<0||+n.dataset.k===k;n.style.opacity=on?'1':'.18';if(n.tagName==='path')n.setAttribute('stroke-width',(series[+n.dataset.k].w||2.5)+(k>=0&&on?1.5:0))});
  cb.onmousemove=e=>{const r=sv.getBoundingClientRect();let i=Math.round(((e.clientX-r.left)/r.width*W-L)/((W-L-R)/11));i=Math.max(0,Math.min(11,i));
-  cr.setAttribute('x1',x(i));cr.setAttribute('x2',x(i));cr.style.display='';{const ym=(e.clientY-r.top)/r.height*H;let bk=-1,bd=1e9;series.forEach((q,k)=>{if(q.v[i]!=null){const dd=Math.abs(y(q.v[i])-ym);if(dd<bd){bd=dd;bk=k}}});hi(bd<45?bk:-1)}tip.hidden=false;
+  cr.setAttribute('x1',x(i));cr.setAttribute('x2',x(i));cr.style.display='';tip.hidden=false;
   tip.innerHTML='<b>'+MN[i]+'</b>'+series.filter(q=>q.v[i]!=null).map(q=>`<div class="tr"><span><i style="background:${q.c}"></i>${q.name}</span><span class="num">${K(q.v[i])}</span></div>`).join('')+(opt.extra?opt.extra(i):'');
   const tx=x(i)/W*r.width;tip.style.left=(tx>r.width*.6?tx-tip.offsetWidth-14:tx+14)+'px'};
- cb.onmouseleave=()=>{tip.hidden=true;cr.style.display='none';hi(-1)}}
+ cb.onmouseleave=()=>{tip.hidden=true;cr.style.display='none'}}
 let chartMode='co';
 function closeBlock(mode,i){const t=24+i;if(t>CUT)return'';
  const idx=mode==='co'?ALL.map((_,j)=>j):[mode];const has=idx.filter(j=>ALL[j][t]!=null);if(!has.length)return'';
@@ -266,7 +262,7 @@ function tipBlock0(mode,i){const k=TS.findIndex(t=>t%12===i);if(k<0)return'';con
 function chart(){const ex=chartMode==='ex';const mk=y=>[...Array(12).keys()].map(m=>{const t=y*12+m;if(t>CUT)return null;return ex?ALL[sel][t]:ALL.reduce((a,r)=>a+(r[t]??0),0)});
  const b=Array(12).fill(null);TS.forEach((t,k)=>{b[t%12]=ex?ROWS[sel].months[k].b:ROWS.reduce((a,o)=>a+o.months[k].b,0)});
  $('#ctitle').textContent=(ex?ROWS[sel].r.n:'La compañía')+' por mes calendario';
- lineChart($('#chart'),1100,340,[{name:'2024',v:mk(0),c:'var(--c24)',w:2,da:'5 4',r:2.4},{name:'2025',v:mk(1),c:'var(--c25)',w:2,r:2.6},{name:'2026',v:mk(2),c:'var(--c26)',w:3.8,r:4.2},{name:'Presupuesto',v:b,c:'var(--meta)',w:3,da:'8 5',r:3.4}],{lbl:true,R:96,fmt:v=>v>=1e6?(v/1e6).toFixed(ex?1:0)+'M':Math.round(v/1e3)+'K',hl:TS[mi]%12,label:'Venta por mes calendario y presupuesto',extra:i=>tipBlock(ex?sel:'co',i)});
+ lineChart($('#chart'),1100,340,[{name:'2024',v:mk(0),c:'var(--c24)'},{name:'2025',v:mk(1),c:'var(--c25)'},{name:'2026',v:mk(2),c:'var(--c26)'},{name:'Presupuesto',v:b,c:'var(--meta)',w:3.2}],{fmt:v=>v>=1e6?(v/1e6).toFixed(ex?1:0)+'M':Math.round(v/1e3)+'K',hl:TS[mi]%12,label:'Venta por mes calendario y presupuesto',extra:i=>tipBlock(ex?sel:'co',i)});
  $('#cview').value=ex?String(sel):'co'}
 const cmS=r=>r>=0?'good':r>=-.05?'warn':'crit',cmP=(a,b)=>b?`<span class="pill p-${cmS(a/b-1)}">${P1(a/b-1)}</span>`:'—';
 const cpS=r=>r>=1?'good':r>=.95?'warn':'crit',cpP=(r,d=0)=>`<span class="pill p-${cpS(r)}">${(r*100).toFixed(d)}%</span>`;
@@ -305,8 +301,8 @@ function detail(){const o=ROWS[sel],m=o.months[mi],t=TS[mi],s=ALL[sel];
   <input type="range" id="dsl" min="-0.3" max="0.6" step="0.005" aria-label="Crecimiento manual"><div class="hint" style="margin:2px 0 0">Arrastra para subir o bajar la meta de ${o.r.n} en ${lab(t)}.</div>
   <div class="btns"><button type="button" id="d12">Aplicar a los 12 meses</button><button type="button" id="dclr">Quitar ajustes</button></div></div>
   <div class="manual"><div class="top"><b style="font-weight:600;font-size:13px">Presupuesto manual ($)</b><span class="num" id="dmb"></span></div><div style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="text" inputmode="numeric" id="dbin" class="gin" style="width:140px" aria-label="Presupuesto manual en pesos"><button type="button" id="dbclr" class="reset">Quitar manual</button></div><div class="hint" style="margin:4px 0 0">Escribe el monto de ${o.r.n} en ${lab(t)} para fijarlo a mano. Las comparaciones contra otros años se calculan con ese monto.</div></div></div>
- <div class="dcol"><div class="legend" style="margin:0 0 4px"><span><i style="background:repeating-linear-gradient(90deg,var(--c24) 0 5px,transparent 5px 8px)"></i>2024</span><span><i style="background:var(--c25)"></i>2025</span><span><i style="background:var(--c26)"></i>2026</span><span><i style="background:repeating-linear-gradient(90deg,var(--meta) 0 7px,transparent 7px 10px)"></i>Presupuesto</span></div><div id="dch"></div></div></div>`;
- lineChart($('#dch'),420,250,[{name:'2024',v:mk(0),c:'var(--c24)',w:2,da:'5 4',r:2.2},{name:'2025',v:mk(1),c:'var(--c25)',w:2,r:2.4},{name:'2026',v:mk(2),c:'var(--c26)',w:3.4,r:3.6},{name:'Presupuesto',v:b,c:'var(--meta)',w:2.8,da:'7 4',r:3}],{fmt:v=>v>=1e6?(v/1e6).toFixed(1)+'M':Math.round(v/1e3)+'K',hl:t%12,label:'Venta por año y presupuesto de '+o.r.n,extra:i=>tipBlock(sel,i)});
+ <div class="dcol"><div class="legend" style="margin:0 0 4px"><span><i style="background:var(--c24)"></i>2024</span><span><i style="background:var(--c25)"></i>2025</span><span><i style="background:var(--c26)"></i>2026</span><span><i style="background:var(--meta)"></i>Presupuesto</span></div><div id="dch"></div></div></div>`;
+ lineChart($('#dch'),420,250,[{name:'2024',v:mk(0),c:'var(--c24)'},{name:'2025',v:mk(1),c:'var(--c25)'},{name:'2026',v:mk(2),c:'var(--c26)'},{name:'Presupuesto',v:b,c:'var(--meta)',w:3}],{fmt:v=>v>=1e6?(v/1e6).toFixed(1)+'M':Math.round(v/1e3)+'K',hl:t%12,label:'Venta por año y presupuesto de '+o.r.n,extra:i=>tipBlock(sel,i)});
  const sl=$('#dsl');sl.value=m.g;detailLive();
  sl.oninput=()=>{OV[okey(o.r.n,t)]=+sl.value;delete OB[okey(o.r.n,t)];saveOV();live()};
  const s1=$('#s1');if(s1){s1.onclick=()=>applySug([sel],false);$('#s12').onclick=()=>applySug([sel],true)}
