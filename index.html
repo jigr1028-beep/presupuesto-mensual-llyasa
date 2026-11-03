@@ -107,8 +107,8 @@ footer{border-top:1px solid var(--line);padding:18px 16px 26px;color:var(--fg2)}
   <div class="legend"><span><i style="background:var(--c24)"></i>2024</span><span><i style="background:var(--c25)"></i>2025</span><span><i style="background:var(--c26)"></i>2026</span><span><i style="background:var(--meta)"></i>Presupuesto</span></div><div id="chart"></div></section>
  <aside class="card" id="detail"></aside>
  <section class="card"><h2 id="ttl">Presupuesto por ejecutivo</h2><div class="hint">Haz clic en una fila para ver el paso a paso arriba y en la gráfica. <span class="adm">Cambia el Crec. % de cualquier fila para subir o bajar su meta.</span> “Prom. 3M” es lo que vendió en sus últimos 3 meses con dato.</div>
-  <div class="bar" style="justify-content:flex-start;margin-bottom:10px"><div class="seg" id="seg"><button type="button" data-s="ALL" aria-pressed="true">Todos</button><button type="button" data-s="TYCMORS" aria-pressed="false">TYCMORS</button><button type="button" data-s="NACIONALES" aria-pressed="false">NACIONALES</button><button type="button" data-s="MAYOREO" aria-pressed="false">MAYOREO</button></div></div>
-  <div class="tw"><table><thead><tr><th class="l">Ejecutivo</th><th id="hB">2024</th><th id="hA">2025</th><th>Base</th><th>Proyección 3M</th><th class="l">Se usa</th><th>Crec. %</th><th class="adm">Sugerido</th><th>Presupuesto</th><th id="hVA">vs 2025</th><th id="hVB">vs 2024</th><th>vs Prom. 3M</th></tr></thead><tbody id="tb"></tbody><tfoot id="tf"></tfoot></table></div></section>
+  <div class="bar" style="justify-content:flex-start;margin-bottom:10px"><div class="seg" id="seg"><button type="button" data-s="ALL" aria-pressed="true">Todos</button><button type="button" data-s="TYCMORS" aria-pressed="false">TYCMORS</button><button type="button" data-s="NACIONALES" aria-pressed="false">NACIONALES</button><button type="button" data-s="MAYOREO" aria-pressed="false">MAYOREO</button><button type="button" data-s="CMORS" aria-pressed="false">CMORS</button></div></div>
+  <div class="tw"><table><thead><tr><th class="l">Ejecutivo</th><th id="hB">2024</th><th id="hA">2025</th><th>Base</th><th>Proyección 3M</th><th class="l">Se usa</th><th>Crec. %</th><th class="adm">Sugerido</th><th>Presupuesto</th><th id="hVA">vs 2025</th><th id="hVB">vs 2024</th><th>vs Prom. 3M</th><th id="hR" hidden>Venta real</th><th id="hC" hidden>Cumplimiento</th></tr></thead><tbody id="tb"></tbody><tfoot id="tf"></tfoot></table></div></section>
 </section>
 
 <section class="view" id="v-cal" hidden><div class="card cal"><h2>Calendario de presupuesto</h2><div class="hint" id="calh">Presupuesto por ejecutivo de octubre 2026 a septiembre 2027, en miles de pesos. En ámbar, lo que supera 30% al mismo mes del año anterior. Incluye tus ajustes manuales.</div><div class="tw" id="calt"></div></div></section>
@@ -173,18 +173,18 @@ footer{border-top:1px solid var(--line);padding:18px 16px 26px;color:var(--fg2)}
 let ADMIN=false;try{if(/[?&#]editar/.test(location.search+location.hash))localStorage.setItem('presupuesto_admin','1');ADMIN=localStorage.getItem('presupuesto_admin')==='1'}catch(e){}
 document.body.classList.toggle('admin',ADMIN);
 
-const QUITAR=['EJECUTIVO3','VENTAS26'];
-const SEGMAY=['MAYOREO','VENTAS22'];
-const RAW=DATOS.ventas.filter(r=>!QUITAR.includes(r.n)).map(r=>SEGMAY.includes(r.n)?{...r,seg:'MAYOREO'}:r);
+const QUITAR=['EJECUTIVO3'];
+const SEGFIX={MAYOREO:'MAYOREO',VENTAS22:'MAYOREO',VENTAS18:'CMORS',VENTAS21:'CMORS'};
+const RAW=DATOS.ventas.filter(r=>!QUITAR.includes(r.n)).map(r=>SEGFIX[r.n]?{...r,seg:SEGFIX[r.n]}:r);
 const $=s=>document.querySelector(s);
 const MN=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const DEF={grow:.01,cap:.20,win:3,lim:null,sugCap:.15};
 let P={...DEF,...(DATOS.motor||{})};
 const EX_KEY='presupuesto_ventas_v1';
 const DK='presupuesto_borrador_v2';
-let OV=JSON.parse(JSON.stringify(DATOS.ajustes||{})),EX={},IMP=false;
-try{const d=JSON.parse(localStorage.getItem(DK)||'null');if(d&&d.base===DATOS.version){OV=d.OV||{};EX=d.EX||{};IMP=!!d.IMP;if(d.P)P={...DEF,...d.P}}}catch(e){}
-const saveDraft=()=>{try{localStorage.setItem(DK,JSON.stringify({base:DATOS.version,OV,EX,P,IMP}))}catch(e){}};
+let OV=JSON.parse(JSON.stringify(DATOS.ajustes||{})),OB=JSON.parse(JSON.stringify(DATOS.montos||{})),EX={},IMP=false,S0=null;
+try{const d=JSON.parse(localStorage.getItem(DK)||'null');if(d&&d.base===DATOS.version){OV=d.OV||{};OB=d.OB||{};EX=d.EX||{};IMP=!!d.IMP;if(d.P)P={...DEF,...d.P}}}catch(e){}
+const saveDraft=()=>{try{localStorage.setItem(DK,JSON.stringify({base:DATOS.version,OV,OB,EX,P,IMP}))}catch(e){}};
 const saveEX=saveDraft;
 let ALL=[],CUT=32;
 function buildAll(){ALL=RAW.map(r=>{const s=[...r.y24,...r.y25,...r.y26];const e=EX[r.n]||{};for(const k in e)s[+k]=e[k];for(let t=0;t<s.length;t++)if(s[t]===undefined)s[t]=null;return s});CUT=0;ALL.forEach(s=>s.forEach((v,t)=>{if(v!=null&&t>CUT)CUT=t}))}
@@ -200,7 +200,7 @@ function calc(s,cut,m,tA,tB){
  let fin=base,use=rule;if(proj>base){fin=proj;use='Proyección 3M'}
  if(P.lim!=null&&fin>proj*(1+P.lim)){fin=proj*(1+P.lim);use='Límite'}
  return{A,B,base,rule,L,win,f,fc,proj,fin,use,b:fin*(1+P.grow)}}
-let TS=[];const setTS=()=>{TS=[...Array(12).keys()].map(i=>CUT+1+i)};setTS();
+let TS=[];const setTS=()=>{const s=S0!=null&&S0<=CUT?S0:CUT+1;TS=[...Array(12).keys()].map(i=>s+i)};setTS();
 const lab=t=>MN[t%12]+' '+(2024+Math.floor(t/12));
 let ROWS;
 const saveOV=saveDraft;
@@ -210,7 +210,8 @@ function sugOf(i){const s=ALL[i],idx=[];for(let t=CUT;t>=0&&idx.length<6;t--)if(
  let g=P.grow,up=false;if(y3>.10&&k>=4){g=Math.min(P.sugCap,Math.max(P.grow,Math.round(.25*y3/.005)*.005));up=g>P.grow+1e-9}
  const reason=`Vendió ${P1(y3,0)} en sus últimos 3 meses contra los mismos del año anterior y ${k} de ${idx.length} meses estuvieron sobre el año anterior. `+(up?`Es un ascenso sostenido: se sugiere ${P1(g)} (la cuarta parte de ese crecimiento, con techo de ${Math.round(P.sugCap*100)}%).`:'No hay un ascenso sostenido, así que se mantiene el mínimo.');
  return{g,up,y3,k,reason}}
-function compute(){ROWS=RAW.map((r,i)=>({r,i,sug:sugOf(i),months:TS.map(t=>{const x=calc(ALL[i],CUT,t%12,t-12,t-24),k=okey(r.n,t),man=OV[k]!=null,g=man?OV[k]:P.grow;return{t,...x,g,man,b:x.fin*(1+g)}})}))}
+function bud(i,t,cut){const x=calc(ALL[i],cut,t%12,t-12,t-24),k=okey(RAW[i].n,t);if(OB[k]!=null)return OB[k];return x.fin*(1+(OV[k]!=null?OV[k]:P.grow))}
+function compute(){ROWS=RAW.map((r,i)=>({r,i,sug:sugOf(i),months:TS.map(t=>{const x=calc(ALL[i],Math.min(CUT,t-1),t%12,t-12,t-24),k=okey(r.n,t),man=OV[k]!=null,mb=OB[k]!=null,b=mb?OB[k]:x.fin*(1+(man?OV[k]:P.grow)),g=x.fin?b/x.fin-1:0;return{t,...x,g,man,mb,b}})}))}
 const K=v=>v==null?'—':v>=1e6?'$'+(v/1e6).toFixed(2)+'M':'$'+Math.round(v/1e3)+'K';
 const P1=(v,d=1)=>v==null?'—':(v>=0?'+':'−')+Math.abs(v*100).toFixed(d)+'%';
 const cls=v=>v==null?'':v<-.005?'neg':v>.005?'pos':'';
@@ -246,7 +247,7 @@ function closeBlock(mode,i){const t=24+i;if(t>CUT)return'';
  const idx=mode==='co'?ALL.map((_,j)=>j):[mode];const has=idx.filter(j=>ALL[j][t]!=null);if(!has.length)return'';
  const sum=f=>has.reduce((a,j)=>a+f(j),0);
  const A=sum(j=>ALL[j][t]),Y1=sum(j=>ALL[j][t-12]??0),Y2=sum(j=>ALL[j][t-24]??0);
- const Bg=sum(j=>calc(ALL[j],t-1,i,t-12,t-24).b);
+ const Bg=sum(j=>bud(j,t,t-1));
  let a26=0,a25=0,a24=0;has.forEach(j=>{for(let m=0;m<=i;m++){if(ALL[j][24+m]==null)continue;a26+=ALL[j][24+m];a25+=ALL[j][12+m]??0;a24+=ALL[j][m]??0}});
  const dK=v=>(v>=0?'+':'−')+K(Math.abs(v));
  const r=(l,v,c)=>`<div class="tr"><span>${l}</span><span class="num ${c||''}">${v}</span></div>`;
@@ -265,18 +266,18 @@ function chart(){const ex=chartMode==='ex';const mk=y=>[...Array(12).keys()].map
  $('#cview').value=ex?String(sel):'co'}
 function kpis(){const o=ROWS.map(r=>r.months[mi]),t=TS[mi];const B=o.reduce((a,x)=>a+x.b,0),A=o.reduce((a,x)=>a+(x.A||0),0),Bb=o.reduce((a,x)=>a+(x.B||0),0),L=o.reduce((a,x)=>a+x.L,0);
  const cnt=k=>o.filter(x=>x.use===k).length,hi=o.filter(x=>x.b/x.L-1>.3).length;
- $('#kpis').innerHTML=[['Presupuesto '+lab(t),K(B),'Suma de los 19 ejecutivos'],['vs '+lab(t-12),P1(B/A-1),K(A)+' vendidos'],['vs '+lab(t-24),P1(B/Bb-1),K(Bb)+' vendidos'],['vs Prom. 3M',P1(B/L-1),'Prom. mensual reciente: '+K(L)],['Ejecutivos exigidos +30% sobre su Prom. 3M',hi+' de 19','Revisar si es alcanzable']].map(k=>`<div class="kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div><div class="d">${k[2]}</div></div>`).join('')
+ $('#kpis').innerHTML=[['Presupuesto '+lab(t),K(B),'Suma de los '+RAW.length+' ejecutivos'],['vs '+lab(t-12),P1(B/A-1),K(A)+' vendidos'],['vs '+lab(t-24),P1(B/Bb-1),K(Bb)+' vendidos'],['vs Prom. 3M',P1(B/L-1),'Prom. mensual reciente: '+K(L)],(t<=CUT?['Venta real '+lab(t),K(ALL.reduce((a,s)=>a+(s[t]??0),0)),'Cumplimiento '+(ALL.reduce((a,s)=>a+(s[t]??0),0)/B*100).toFixed(0)+'%']:['Ejecutivos exigidos +30% sobre su Prom. 3M',hi+' de '+RAW.length,'Revisar si es alcanzable'])].map(k=>`<div class="kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div><div class="d">${k[2]}</div></div>`).join('')
  +`<div class="kpi"><div class="l">Qué se usó como base</div><div style="display:flex;flex-direction:column;gap:5px;margin-top:3px;font-size:13px">${['Año anterior','Media 2 años','Proyección 3M','Límite'].filter(k=>cnt(k)||k!=='Límite').map(k=>`<span><span class="pill ${pc[k]}">${k}</span> <b class="num">${cnt(k)}</b></span>`).join('')}</div></div>`}
-function table(){const t=TS[mi];$('#ttl').textContent='Presupuesto de '+lab(t);$('#hA').textContent=lab(t-12);$('#hB').textContent=lab(t-24);$('#hVA').textContent='vs '+lab(t-12);$('#hVB').textContent='vs '+lab(t-24);
+function table(){const t=TS[mi],past=t<=CUT;$('#hR').hidden=!past;$('#hC').hidden=!past;$('#ttl').textContent='Presupuesto de '+lab(t);$('#hA').textContent=lab(t-12);$('#hB').textContent=lab(t-24);$('#hVA').textContent='vs '+lab(t-12);$('#hVB').textContent='vs '+lab(t-24);
  const a=ROWS.filter(r=>seg==='ALL'||r.r.seg===seg).sort((p,q)=>q.months[mi].b-p.months[mi].b);
- $('#tb').innerHTML=a.map(o=>{const m=o.months[mi];return `<tr tabindex="0" data-i="${o.i}" aria-selected="${o.i===sel}"><td><b style="font-weight:500">${o.r.n}</b></td><td class="num">${K(m.B)}</td><td class="num">${K(m.A)}</td><td class="num">${K(m.base)}</td><td class="num">${K(m.proj)}</td><td class="l"><span class="pill ${pc[m.use]}">${m.use}</span></td><td class="num"><input class="gin ${m.man?'man':''}" type="number" step="0.5" value="${(m.g*100).toFixed(1)}" data-n="${o.r.n}" data-t="${m.t}" ${ADMIN?'':'readonly tabindex="-1"'} aria-label="Crecimiento de ${o.r.n}"> %</td><td class="num adm">${o.sug.up?`<button class="sugb" type="button" data-i="${o.i}" title="Aplicar el sugerido a este mes">${P1(o.sug.g)}</button>`:'<span class="muted">—</span>'}</td><td class="num"><b style="font-weight:500">${K(m.b)}</b></td><td class="num ${cls(m.A?m.b/m.A-1:null)}">${m.A?P1(m.b/m.A-1):'—'}</td><td class="num ${cls(m.B?m.b/m.B-1:null)}">${m.B?P1(m.b/m.B-1):'—'}</td><td class="num ${m.b/m.L-1>.3?'neg':''}">${P1(m.b/m.L-1)}</td></tr>`}).join('');
+ $('#tb').innerHTML=a.map(o=>{const m=o.months[mi];return `<tr tabindex="0" data-i="${o.i}" aria-selected="${o.i===sel}"><td><b style="font-weight:500">${o.r.n}</b></td><td class="num">${K(m.B)}</td><td class="num">${K(m.A)}</td><td class="num">${K(m.base)}</td><td class="num">${K(m.proj)}</td><td class="l"><span class="pill ${pc[m.use]}">${m.use}</span></td><td class="num"><input class="gin ${m.man?'man':''}" type="number" step="0.5" value="${(m.g*100).toFixed(1)}" data-n="${o.r.n}" data-t="${m.t}" ${ADMIN?'':'readonly tabindex="-1"'} aria-label="Crecimiento de ${o.r.n}"> %</td><td class="num adm">${o.sug.up?`<button class="sugb" type="button" data-i="${o.i}" title="Aplicar el sugerido a este mes">${P1(o.sug.g)}</button>`:'<span class="muted">—</span>'}</td><td class="num"><b style="font-weight:500">${K(m.b)}</b>${ADMIN?` <input class="gin bin ${m.mb?'man':''}" type="text" inputmode="numeric" data-n="${o.r.n}" data-t="${m.t}" value="${Math.round(m.b)}" aria-label="Presupuesto en pesos de ${o.r.n}" style="width:96px">`:''}</td><td class="num ${cls(m.A?m.b/m.A-1:null)}">${m.A?P1(m.b/m.A-1):'—'}</td><td class="num ${cls(m.B?m.b/m.B-1:null)}">${m.B?P1(m.b/m.B-1):'—'}</td><td class="num ${m.b/m.L-1>.3?'neg':''}">${P1(m.b/m.L-1)}</td>${past?`<td class="num"><b style="font-weight:500">${K(ALL[o.i][t])}</b></td><td class="num ${ALL[o.i][t]==null?'':ALL[o.i][t]>=m.b?'pos':'neg'}">${ALL[o.i][t]==null?'—':(ALL[o.i][t]/m.b*100).toFixed(0)+'%'}</td>`:''}</tr>`}).join('');
  const s=k=>a.reduce((x,o)=>x+(o.months[mi][k]||0),0);
- $('#tf').innerHTML=`<tr><td>Total</td><td class="num">${K(s('B'))}</td><td class="num">${K(s('A'))}</td><td class="num">${K(s('base'))}</td><td class="num">${K(s('proj'))}</td><td></td><td></td><td></td><td class="num">${K(s('b'))}</td><td class="num ${cls(s('b')/s('A')-1)}">${P1(s('b')/s('A')-1)}</td><td class="num ${cls(s('b')/s('B')-1)}">${P1(s('b')/s('B')-1)}</td><td class="num">${P1(s('b')/s('L')-1)}</td></tr>`}
+ $('#tf').innerHTML=`<tr><td>Total</td><td class="num">${K(s('B'))}</td><td class="num">${K(s('A'))}</td><td class="num">${K(s('base'))}</td><td class="num">${K(s('proj'))}</td><td></td><td></td><td></td><td class="num">${K(s('b'))}</td><td class="num ${cls(s('b')/s('A')-1)}">${P1(s('b')/s('A')-1)}</td><td class="num ${cls(s('b')/s('B')-1)}">${P1(s('b')/s('B')-1)}</td><td class="num">${P1(s('b')/s('L')-1)}</td>${past?(()=>{const R=a.reduce((x,o)=>x+(ALL[o.i][t]??0),0);return `<td class="num">${K(R)}</td><td class="num ${R>=s('b')?'pos':'neg'}">${(R/s('b')*100).toFixed(0)}%</td>`})():''}</tr>`}
 function applySug(idxs,all12){idxs.forEach(i=>{const g=ROWS[i].sug.g;(all12?TS:[TS[mi]]).forEach(t=>OV[okey(ROWS[i].r.n,t)]=g)});saveOV();update()}
-function ovbar(){const n=Object.keys(OV).length,ns=ROWS.filter(o=>o.sug.up).map(o=>o.i);
+function ovbar(){const n=Object.keys(OV).length+Object.keys(OB).length,ns=ROWS.filter(o=>o.sug.up).map(o=>o.i);
  $('#ovbar').innerHTML=(n?`<span class="pill p-acc">${n} ajuste${n>1?'s':''} manual${n>1?'es':''}</span><span>Se guardan en este navegador.</span><button class="reset" id="ovclr" type="button">Quitar todos</button>`:'<span>Sin ajustes manuales.</span>')+
  (ns.length?`<span style="margin-left:auto">${ns.length} ejecutivo${ns.length>1?'s':''} con crecimiento sugerido sobre el mínimo:</span><button class="reset" id="sg1" type="button">Aplicar a este mes</button><button class="reset" id="sg12" type="button">Aplicar a los 12 meses</button>`:'');
- const b=$('#ovclr');if(b)b.onclick=()=>{OV={};saveOV();update()};const a=$('#sg1');if(a)a.onclick=()=>applySug(ns,false);const c=$('#sg12');if(c)c.onclick=()=>applySug(ns,true)}
+ const b=$('#ovclr');if(b)b.onclick=()=>{OV={};OB={};saveOV();update()};const a=$('#sg1');if(a)a.onclick=()=>applySug(ns,false);const c=$('#sg12');if(c)c.onclick=()=>applySug(ns,true)}
 function detail(){const o=ROWS[sel],m=o.months[mi],t=TS[mi],s=ALL[sel];
  const mk=y=>[...Array(12).keys()].map(k=>{const tt=y*12+k;return tt<=CUT?s[tt]:null});
  const b=Array(12).fill(null);o.months.forEach(x=>b[x.t%12]=x.b);
@@ -294,15 +295,17 @@ function detail(){const o=ROWS[sel],m=o.months[mi],t=TS[mi],s=ALL[sel];
  <div class="dcol adm"><div class="manual"><div class="top"><b style="font-weight:600;font-size:13px">Sugerencia según su comportamiento</b><span class="num ${o.sug.up?'pos':''}">${P1(o.sug.g)}</span></div><div class="hint" style="margin:2px 0 0">${o.sug.reason}</div>${o.sug.up?`<div class="btns"><button type="button" id="s1">Aplicar a este mes</button><button type="button" id="s12">Aplicar a los 12 meses</button></div>`:''}</div>
   <div class="manual"><div class="top"><b style="font-weight:600;font-size:13px">Ajuste manual del crecimiento</b><span class="num" id="dv"></span></div>
   <input type="range" id="dsl" min="-0.3" max="0.6" step="0.005" aria-label="Crecimiento manual"><div class="hint" style="margin:2px 0 0">Arrastra para subir o bajar la meta de ${o.r.n} en ${lab(t)}.</div>
-  <div class="btns"><button type="button" id="d12">Aplicar a los 12 meses</button><button type="button" id="dclr">Quitar ajustes</button></div></div></div>
+  <div class="btns"><button type="button" id="d12">Aplicar a los 12 meses</button><button type="button" id="dclr">Quitar ajustes</button></div></div>
+  <div class="manual"><div class="top"><b style="font-weight:600;font-size:13px">Presupuesto manual ($)</b><span class="num" id="dmb"></span></div><div style="display:flex;gap:8px;align-items:center;margin-top:6px"><input type="text" inputmode="numeric" id="dbin" class="gin" style="width:140px" aria-label="Presupuesto manual en pesos"><button type="button" id="dbclr" class="reset">Quitar manual</button></div><div class="hint" style="margin:4px 0 0">Escribe el monto de ${o.r.n} en ${lab(t)} para fijarlo a mano. Las comparaciones contra otros años se calculan con ese monto.</div></div></div>
  <div class="dcol"><div class="legend" style="margin:0 0 4px"><span><i style="background:var(--c24)"></i>2024</span><span><i style="background:var(--c25)"></i>2025</span><span><i style="background:var(--c26)"></i>2026</span><span><i style="background:var(--meta)"></i>Presupuesto</span></div><div id="dch"></div></div></div>`;
  lineChart($('#dch'),420,250,[{name:'2024',v:mk(0),c:'var(--c24)'},{name:'2025',v:mk(1),c:'var(--c25)'},{name:'2026',v:mk(2),c:'var(--c26)'},{name:'Presupuesto',v:b,c:'var(--meta)',w:3}],{fmt:v=>v>=1e6?(v/1e6).toFixed(1)+'M':Math.round(v/1e3)+'K',hl:t%12,label:'Venta por año y presupuesto de '+o.r.n,extra:i=>tipBlock(sel,i)});
  const sl=$('#dsl');sl.value=m.g;detailLive();
- sl.oninput=()=>{OV[okey(o.r.n,t)]=+sl.value;saveOV();live()};
+ sl.oninput=()=>{OV[okey(o.r.n,t)]=+sl.value;delete OB[okey(o.r.n,t)];saveOV();live()};
  const s1=$('#s1');if(s1){s1.onclick=()=>applySug([sel],false);$('#s12').onclick=()=>applySug([sel],true)}
  $('#d12').onclick=()=>{const v=+sl.value;TS.forEach(tt=>OV[okey(o.r.n,tt)]=v);saveOV();update()};
- $('#dclr').onclick=()=>{TS.forEach(tt=>delete OV[okey(o.r.n,tt)]);saveOV();update()}}
-function detailLive(){const o=ROWS[sel],m=o.months[mi];$('#dg').textContent=P1(m.g);$('#dman').innerHTML=m.man?'<span class="pill p-acc">Manual</span>':'(mínimo)';$('#dbud').textContent=K(m.b);$('#dbig').textContent=K(m.b);$('#dchips').innerHTML=`<span class="pill p-neu">${m.A?P1(m.b/m.A-1)+' vs '+lab(m.t-12):'sin año anterior'}</span><span class="pill p-neu">${m.B?P1(m.b/m.B-1)+' vs '+lab(m.t-24):''}</span><span class="pill ${m.b/m.L-1>.3?'p-crit':'p-neu'}">${P1(m.b/m.L-1,0)} vs Prom. 3M</span>`;$('#dv').textContent=P1(m.g);
+ $('#dclr').onclick=()=>{TS.forEach(tt=>{delete OV[okey(o.r.n,tt)];delete OB[okey(o.r.n,tt)]});saveOV();update()};
+ const bi=$('#dbin');bi.value=Math.round(m.b);bi.onchange=()=>{const v=parseN(bi.value),k=okey(o.r.n,t);if(v==null||v<0)delete OB[k];else OB[k]=Math.round(v);saveOV();update()};$('#dbclr').onclick=()=>{delete OB[okey(o.r.n,t)];saveOV();update()}}
+function detailLive(){const o=ROWS[sel],m=o.months[mi];$('#dg').textContent=P1(m.g);$('#dman').innerHTML=(m.man||m.mb)?'<span class="pill p-acc">Manual</span>':'(mínimo)';if($('#dmb'))$('#dmb').textContent=m.mb?'Fijado a mano':'Automático';$('#dbud').textContent=K(m.b);$('#dbig').textContent=K(m.b);$('#dchips').innerHTML=`<span class="pill p-neu">${m.A?P1(m.b/m.A-1)+' vs '+lab(m.t-12):'sin año anterior'}</span><span class="pill p-neu">${m.B?P1(m.b/m.B-1)+' vs '+lab(m.t-24):''}</span><span class="pill ${m.b/m.L-1>.3?'p-crit':'p-neu'}">${P1(m.b/m.L-1,0)} vs Prom. 3M</span>`;$('#dv').textContent=P1(m.g);
  $('#dnote').textContent='Exige '+P1(m.b/m.L-1,0)+' sobre su promedio de los últimos meses ('+K(m.L)+') y '+(m.A?P1(m.b/m.A-1,0)+' contra '+lab(m.t-12):'sin dato del año anterior')+'.'}
 function live(){saveDraft();draftBar();compute();chart();kpis();table();cal();ovbar();detailLive();if(window.crmRender)crmRender()}
 function cal(){const hdr=TS.map(t=>`<th>${lab(t)}</th>`).join('');
@@ -312,13 +315,13 @@ function cal(){const hdr=TS.map(t=>`<th>${lab(t)}</th>`).join('');
 let btM=CUT;
 function backtest(){const rows=[],cum=[];const cuts=[CUT-3,CUT-2,CUT-1];
  for(const cut of cuts){const t=cut+1;let B=0,A=0,hit=0,n=0,y24=0,y25=0;
-  RAW.forEach((r,i)=>{const s=ALL[i];if(s[t]==null)return;const o=calc(s,cut,t%12,t-12,t-24);B+=o.b;A+=s[t];n++;y24+=s[t-24];y25+=s[t-12];if(s[t]>=o.b)hit++});
+  RAW.forEach((r,i)=>{const s=ALL[i];if(s[t]==null)return;const bb=bud(i,t,cut);B+=bb;A+=s[t];n++;y24+=s[t-24];y25+=s[t-12];if(s[t]>=bb)hit++});
   cum.push(A/B);rows.push({t,B,A,hit,n,y24,y25})}
  const th=['Mes','2024','2025','Presupuesto con la regla','Venta real','Cumplimiento','Real vs 2025','Real vs 2024','Ppto vs 2025','Ppto vs 2024','Ejecutivos que cumplen'];
  const body=rows.map(r=>`<tr><td>${MN[r.t%12]}</td><td class="num">${K(r.y24)}</td><td class="num">${K(r.y25)}</td><td class="num">${K(r.B)}</td><td class="num"><b style="font-weight:500">${K(r.A)}</b></td><td class="num ${r.A/r.B<.95?'neg':''}">${(r.A/r.B*100).toFixed(1)}%</td><td class="num ${cls(r.A/r.y25-1)}">${P1(r.A/r.y25-1)}</td><td class="num ${cls(r.A/r.y24-1)}">${P1(r.A/r.y24-1)}</td><td class="num ${cls(r.B/r.y25-1)}">${P1(r.B/r.y25-1)}</td><td class="num ${cls(r.B/r.y24-1)}">${P1(r.B/r.y24-1)}</td><td class="num">${r.hit} de ${r.n}</td></tr>`).join('');
  const sumA=rows.reduce((a,r)=>a+r.A,0),s25=rows.reduce((a,r)=>a+r.y25,0),s24=rows.reduce((a,r)=>a+r.y24,0);
  const body2=rows.map(r=>r);const t=btM,cut=t-1;
- const det=RAW.map((r,i)=>{const s=ALL[i];if(s[t]==null)return null;const o=calc(s,cut,t%12,t-12,t-24);return{n:r.n,y24:s[t-24],y25:s[t-12],b:o.b,a:s[t]}}).filter(Boolean);
+ const det=RAW.map((r,i)=>{const s=ALL[i];if(s[t]==null)return null;return{n:r.n,y24:s[t-24],y25:s[t-12],b:bud(i,t,cut),a:s[t]}}).filter(Boolean);
  const dr=det.map(d=>`<tr><td>${d.n}</td><td class="num">${K(d.y24)}</td><td class="num">${K(d.y25)}</td><td class="num">${K(d.b)}</td><td class="num"><b style="font-weight:500">${K(d.a)}</b></td><td class="num ${d.a>=d.b?'pos':'neg'}">${(d.a/d.b*100).toFixed(0)}%</td><td class="num ${cls(d.a/d.y25-1)}">${P1(d.a/d.y25-1)}</td><td class="num ${cls(d.a/d.y24-1)}">${P1(d.a/d.y24-1)}</td><td class="num ${cls(d.b/d.y25-1)}">${P1(d.b/d.y25-1)}</td><td class="num ${cls(d.b/d.y24-1)}">${P1(d.b/d.y24-1)}</td></tr>`).join('');
  const dt={y24:det.reduce((a,d)=>a+d.y24,0),y25:det.reduce((a,d)=>a+d.y25,0),b:det.reduce((a,d)=>a+d.b,0),a:det.reduce((a,d)=>a+d.a,0)};
  $('#bt').innerHTML=`<div class="tw"><table style="min-width:1000px"><thead><tr>${th.map((h,i)=>`<th ${i===0?'class="l"':''}>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>
@@ -327,8 +330,8 @@ function backtest(){const rows=[],cum=[];const cuts=[CUT-3,CUT-2,CUT-1];
  <div class="tw"><table style="min-width:1000px"><thead><tr>${['Ejecutivo','2024','2025','Presupuesto con la regla','Venta real','Cumplimiento','Real vs 2025','Real vs 2024','Ppto vs 2025','Ppto vs 2024'].map((h,i)=>`<th ${i===0?'class="l"':''}>${h}</th>`).join('')}</tr></thead><tbody>${dr}</tbody><tfoot><tr><td>Total</td><td class="num">${K(dt.y24)}</td><td class="num">${K(dt.y25)}</td><td class="num">${K(dt.b)}</td><td class="num">${K(dt.a)}</td><td class="num">${(dt.a/dt.b*100).toFixed(0)}%</td><td class="num ${cls(dt.a/dt.y25-1)}">${P1(dt.a/dt.y25-1)}</td><td class="num ${cls(dt.a/dt.y24-1)}">${P1(dt.a/dt.y24-1)}</td><td class="num ${cls(dt.b/dt.y25-1)}">${P1(dt.b/dt.y25-1)}</td><td class="num ${cls(dt.b/dt.y24-1)}">${P1(dt.b/dt.y24-1)}</td></tr></tfoot></table></div>`;
  $('#btm').onclick=e=>{const b=e.target.closest('button');if(b){btM=+b.dataset.m;backtest()}}}
 function update(){saveDraft();draftBar();syncParams();compute();chart();kpis();table();detail();cal();ovbar();backtest();if(window.crmRender)crmRender()}
-const cv=$('#cview');cv.innerHTML='<option value="co">Compañía (19 ejecutivos)</option>'+RAW.map((r,i)=>`<option value="${i}">${r.n}</option>`).join('');cv.onchange=()=>{if(cv.value==='co')chartMode='co';else{sel=+cv.value;chartMode='ex'}table();detail();chart()};
-const sm=$('#mes');const fillMes=()=>{sm.innerHTML=TS.map((t,i)=>`<option value="${i}">${lab(t)}</option>`).join('');sm.value=String(mi)};fillMes();sm.onchange=()=>{mi=+sm.value;update()};
+const cv=$('#cview');cv.innerHTML='<option value="co">Compañía ('+RAW.length+' ejecutivos)</option>'+RAW.map((r,i)=>`<option value="${i}">${r.n}</option>`).join('');cv.onchange=()=>{if(cv.value==='co')chartMode='co';else{sel=+cv.value;chartMode='ex'}table();detail();chart()};
+const sm=$('#mes');const fillMes=()=>{const o=[];for(let t=24;t<=CUT+12;t++)o.push(`<option value="${t}">${lab(t)}${t<=CUT?' (cerrado)':''}</option>`);sm.innerHTML=o.join('');sm.value=String(TS[mi])};fillMes();sm.onchange=()=>{const t=+sm.value;S0=t<=CUT?t:null;setTS();mi=t-TS[0];update()};
 $('#seg').onclick=e=>{const b=e.target.closest('button');if(!b)return;seg=b.dataset.s;[...$('#seg').children].forEach(c=>c.setAttribute('aria-pressed',c===b));table()};
 const VIEWS=['resumen','cal','bt','datos','crm','ajustes'];
 function go(v){if(!VIEWS.includes(v)||(!ADMIN&&v==='datos'))v='resumen';VIEWS.forEach(x=>{$('#v-'+x).hidden=x!==v});document.querySelectorAll('#nav a').forEach(a=>{if(a.dataset.v===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});window.scrollTo(0,0);try{history.replaceState(null,'','#'+v)}catch(e){}}
@@ -341,7 +344,7 @@ let _tc=[];$('#ttl1').addEventListener('click',()=>{const n=Date.now();_tc=_tc.f
 $('#bexit').onclick=()=>setAdmin(false);
 document.querySelectorAll('#nav a').forEach(a=>a.onclick=e=>{e.preventDefault();go(a.dataset.v)});
 $('#tb').onclick=e=>{if(e.target.closest('input'))return;const sb=e.target.closest('.sugb');if(sb){applySug([+sb.dataset.i],false);return}const t=e.target.closest('tr');if(t){sel=+t.dataset.i;chartMode='ex';table();detail();chart()}};
-$('#tb').onchange=e=>{if(!ADMIN)return;const i=e.target.closest('input');if(!i)return;const v=parseFloat(i.value);if(isNaN(v)){update();return}OV[okey(i.dataset.n,+i.dataset.t)]=v/100;saveOV();update()};
+$('#tb').onchange=e=>{if(!ADMIN)return;const i=e.target.closest('input');if(!i)return;const k=okey(i.dataset.n,+i.dataset.t);if(i.classList.contains('bin')){const v=parseN(i.value);if(v==null||v<0)delete OB[k];else OB[k]=Math.round(v);saveOV();update();return}const v=parseFloat(i.value);if(isNaN(v)){update();return}OV[k]=v/100;delete OB[k];saveOV();update()};
 $('#tb').onkeydown=e=>{if(e.target.closest('input'))return;if(e.key==='Enter'){const t=e.target.closest('tr');if(t){sel=+t.dataset.i;chartMode='ex';table();detail();chart()}}};
 $('#rs').onclick=()=>{P={...DEF};update()};
 $('#th').onclick=()=>{const d=document.documentElement,c=d.getAttribute('data-theme');const dark=c?c==='dark':matchMedia('(prefers-color-scheme:dark)').matches;d.setAttribute('data-theme',dark?'light':'dark')};
@@ -373,7 +376,7 @@ let dT=CUT+1;
 function datosOpts(){const mx=Math.min(CUT+1,35);dT=Math.min(dT,mx);$('#dm').innerHTML=Array.from({length:mx-23},(_,k)=>mx-k).map(t=>`<option value="${t}">${lab(t)}${t>CUT?' (siguiente)':''}</option>`).join('');$('#dm').value=String(dT)}
 function datosRender(){const t=dT;$('#dtb').innerHTML=RAW.map((r,i)=>{const cap=EX[r.n]&&EX[r.n][t]!=null,v=ALL[i][t];return `<tr><td class="l">${r.n}</td><td class="l">${r.seg}</td><td class="num">${v==null?'—':fmtMX(v)}${cap?' <span class="pill p-acc">Capturado</span>':''}</td><td class="num"><input type="text" inputmode="numeric" data-i="${i}" aria-label="Venta nueva de ${r.n}" style="width:130px;text-align:right" value="${cap?EX[r.n][t]:''}"></td></tr>`}).join('')}
 const parseN=x=>{const c=String(x).replace(/[^0-9.\-]/g,'');if(c===''||c==='-'||c==='.')return null;const v=parseFloat(c);return isNaN(v)?null:v};
-function rebuild(){buildAll();setTS();mi=0;btM=CUT;dT=Math.min(CUT+1,35);fillMes();datosOpts();datosRender();texts();update()}
+function rebuild(){buildAll();S0=null;setTS();mi=0;btM=CUT;dT=Math.min(CUT+1,35);fillMes();datosOpts();datosRender();texts();update()}
 const dmsg=t=>{$('#dmsg').textContent=t};
 $('#dm').onchange=()=>{dT=+$('#dm').value;dmsg('');datosRender()};
 $('#dfill').onclick=()=>{let ls=$('#dpaste').value.replace(/\r/g,'').split('\n');while(ls.length&&ls[ls.length-1].trim()==='')ls.pop();
@@ -385,11 +388,11 @@ $('#dapply').onclick=()=>{let n=0;document.querySelectorAll('#dtb input').forEac
 $('#dclear').onclick=()=>{let n=0;for(const nm in EX)if(EX[nm][dT]!=null){delete EX[nm][dT];n++}saveEX();rebuild();$('#dmsg').style.color='var(--good)';dmsg(n?'Captura quitada.':'No había captura en ese mes.')};
 const bm=(t,ok=true)=>{$('#bmsg').style.color=ok?'var(--good)':'var(--crit)';$('#bmsg').textContent=t};
 $('#bdown').onclick=()=>{const d=new Date(),f=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
- const blob=new Blob([JSON.stringify({v:1,ajustes:OV,ventas:EX,motor:P},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='respaldo_presupuesto_'+f+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);bm('Respaldo descargado.')};
+ const blob=new Blob([JSON.stringify({v:1,ajustes:OV,montos:OB,ventas:EX,motor:P},null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='respaldo_presupuesto_'+f+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);bm('Respaldo descargado.')};
 $('#bup').onclick=()=>$('#bfile').click();
 $('#bfile').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);if(!j||j.v!==1||typeof j.ajustes!=='object'||typeof j.ventas!=='object')throw 0;
-  OV=j.ajustes||{};EX=j.ventas||{};if(j.motor&&typeof j.motor==='object')P={...DEF,...j.motor};saveOV();saveEX();rebuild();bm('Respaldo cargado: '+Object.keys(OV).length+' ajustes y ventas de '+Object.keys(EX).length+' ejecutivos.')}catch(err){bm('El archivo no es un respaldo válido.',false)}e.target.value=''};rd.readAsText(f)};
-$('#bwipe').onclick=()=>{if(!confirm('Se borrarán los cambios sin publicar de este navegador (ajustes y ventas capturadas). ¿Continuar?'))return;OV=JSON.parse(JSON.stringify(DATOS.ajustes||{}));EX={};IMP=false;P={...DEF,...(DATOS.motor||{})};saveDraft();rebuild();bm('Borrados los cambios sin publicar. Vuelves a lo publicado.')};
+  OV=j.ajustes||{};OB=j.montos||{};EX=j.ventas||{};if(j.motor&&typeof j.motor==='object')P={...DEF,...j.motor};saveOV();saveEX();rebuild();bm('Respaldo cargado: '+Object.keys(OV).length+' ajustes y ventas de '+Object.keys(EX).length+' ejecutivos.')}catch(err){bm('El archivo no es un respaldo válido.',false)}e.target.value=''};rd.readAsText(f)};
+$('#bwipe').onclick=()=>{if(!confirm('Se borrarán los cambios sin publicar de este navegador (ajustes y ventas capturadas). ¿Continuar?'))return;OV=JSON.parse(JSON.stringify(DATOS.ajustes||{}));OB=JSON.parse(JSON.stringify(DATOS.montos||{}));EX={};IMP=false;P={...DEF,...(DATOS.motor||{})};saveDraft();rebuild();bm('Borrados los cambios sin publicar. Vuelves a lo publicado.')};
 datosOpts();datosRender();texts();
 
 function snapRAW(){return DATOS.ventas.map(r=>({n:r.n,seg:r.seg,y24:r.y24,y25:r.y25,y26:r.y26}))}
@@ -419,13 +422,13 @@ async function datosJS(){const ver=new Date().toISOString();
  const npw=$('#ppw').value,pw=npw||window.PWD;
  if(!pw)throw new Error('Escribe una contraseña para cifrar el archivo.');
  if(npw&&npw.length<10)throw new Error('La contraseña debe tener al menos 10 caracteres.');
- const obj={version:ver,motor:P,ajustes:OV,ventas:RAW.map((r,i)=>({n:r.n,seg:r.seg,y24:ALL[i].slice(0,12),y25:ALL[i].slice(12,24),y26:ALL[i].slice(24,CUT+1)}))};
+ const obj={version:ver,motor:P,ajustes:OV,montos:OB,ventas:RAW.map((r,i)=>({n:r.n,seg:r.seg,y24:ALL[i].slice(0,12),y25:ALL[i].slice(12,24),y26:ALL[i].slice(24,CUT+1)}))};
  const rf=refData();if(rf)obj.ref=rf;
  const out=await encPayload(obj,pw);window.PWD=pw;return out}
 function datosJSold(){const ver=new Date().toISOString();
  const rows=RAW.map((r,i)=>' {"n":'+JSON.stringify(r.n)+',"seg":'+JSON.stringify(r.seg)+',"y24":'+JSON.stringify(r.y24)+',"y25":'+JSON.stringify(r.y25)+',"y26":'+JSON.stringify(ALL[i].slice(24,CUT+1))+'}');
  return '// Datos del presupuesto LLYASA. Se genera desde el dashboard (Captura de ventas > Publicar). No editar a mano.\nwindow.DATOS={\n"version":'+JSON.stringify(ver)+',\n"motor":'+JSON.stringify(P)+',\n"ajustes":'+JSON.stringify(OV)+',\n"ventas":[\n'+rows.join(',\n')+'\n]};\n'}
-function draftBar(){const dirty=Object.keys(EX).length>0||JSON.stringify(OV)!==JSON.stringify(DATOS.ajustes||{})||JSON.stringify(P)!==JSON.stringify({...DEF,...(DATOS.motor||{})});$('#draft').hidden=!dirty}
+function draftBar(){const dirty=Object.keys(EX).length>0||JSON.stringify(OB)!==JSON.stringify(DATOS.montos||{})||JSON.stringify(OV)!==JSON.stringify(DATOS.ajustes||{})||JSON.stringify(P)!==JSON.stringify({...DEF,...(DATOS.motor||{})});$('#draft').hidden=!dirty}
 const pm=(t,ok=true)=>{$('#pmsg').style.color=ok?'var(--good)':'var(--crit)';$('#pmsg').textContent=t};
 $('#pdown').onclick=async()=>{let txt;try{txt=await datosJS()}catch(e){pm(e.message,false);return}const blob=new Blob([txt],{type:'text/javascript'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='datos.js';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);pm('Descargado y cifrado. Súbelo a GitHub para publicarlo.');$('#ppw').value=''};
 $('#pcopy').onclick=async()=>{let t;try{t=await datosJS()}catch(e){pm(e.message,false);return}try{await navigator.clipboard.writeText(t);pm('Copiado y cifrado. Pégalo en datos.js de GitHub.');$('#ppw').value=''}catch(e){pm('No se pudo copiar; usa “Descargar datos.js”.',false)}};
