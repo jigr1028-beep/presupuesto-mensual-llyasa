@@ -176,7 +176,9 @@ document.body.classList.toggle('admin',ADMIN);
 
 const QUITAR=['EJECUTIVO3'];
 const SEGFIX={MAYOREO:'MAYOREO',VENTAS22:'MAYOREO',VENTAS18:'CMORS',VENTAS21:'CMORS'};
-const RAW=DATOS.ventas.filter(r=>!QUITAR.includes(r.n)).map(r=>SEGFIX[r.n]?{...r,seg:SEGFIX[r.n]}:r);
+const BASE=DATOS.ventas.filter(r=>!QUITAR.includes(r.n)).map(r=>SEGFIX[r.n]?{...r,seg:SEGFIX[r.n]}:r);
+let ADDN=[],RAW=BASE;
+function mkRAW(){const have=new Set(BASE.map(r=>r.n));RAW=BASE.concat(ADDN.filter(a=>!have.has(a.n)).map(a=>({n:a.n,seg:a.seg,y24:Array(12).fill(null),y25:Array(12).fill(null),y26:[]})))}
 const $=s=>document.querySelector(s);
 const MN=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const DEF={grow:.01,cap:.20,win:3,lim:null,sugCap:.15};
@@ -184,8 +186,8 @@ let P={...DEF,...(DATOS.motor||{})};
 const EX_KEY='presupuesto_ventas_v1';
 const DK='presupuesto_borrador_v2';
 let OV=JSON.parse(JSON.stringify(DATOS.ajustes||{})),OB=JSON.parse(JSON.stringify(DATOS.montos||{})),EX={},IMP=false,S0=null;
-try{const d=JSON.parse(localStorage.getItem(DK)||'null');if(d&&d.base===DATOS.version){OV=d.OV||{};OB=d.OB||{};EX=d.EX||{};IMP=!!d.IMP;if(d.P)P={...DEF,...d.P}}}catch(e){}
-const saveDraft=()=>{try{localStorage.setItem(DK,JSON.stringify({base:DATOS.version,OV,OB,EX,P,IMP}))}catch(e){}};
+try{const d=JSON.parse(localStorage.getItem(DK)||'null');if(d&&d.base===DATOS.version){OV=d.OV||{};OB=d.OB||{};EX=d.EX||{};IMP=!!d.IMP;ADDN=d.AD||[];mkRAW();if(d.P)P={...DEF,...d.P}}}catch(e){}
+const saveDraft=()=>{try{localStorage.setItem(DK,JSON.stringify({base:DATOS.version,OV,OB,EX,P,IMP,AD:ADDN}))}catch(e){}};
 const saveEX=saveDraft;
 let ALL=[],CUT=32;
 function buildAll(){ALL=RAW.map(r=>{const s=[...r.y24,...r.y25,...r.y26];const e=EX[r.n]||{};for(const k in e)s[+k]=e[k];for(let t=0;t<s.length;t++)if(s[t]===undefined)s[t]=null;return s});CUT=0;ALL.forEach(s=>s.forEach((v,t)=>{if(v!=null&&t>CUT)CUT=t}))}
@@ -339,7 +341,7 @@ function backtest(){const rows=[],cum=[];const cuts=[CUT-3,CUT-2,CUT-1];
  <div class="tw"><table style="min-width:1000px"><thead><tr>${['Ejecutivo','2024','2025','Presupuesto con la regla','Venta real','Cumplimiento','Real vs 2025','Real vs 2024','Ppto vs 2025','Ppto vs 2024'].map((h,i)=>`<th ${i===0?'class="l"':''}>${h}</th>`).join('')}</tr></thead><tbody>${dr}</tbody><tfoot><tr><td>Total</td><td class="num">${K(dt.y24)}</td><td class="num">${K(dt.y25)}</td><td class="num">${K(dt.b)}</td><td class="num">${K(dt.a)}</td><td class="num">${cpP(dt.a/dt.b)}</td><td class="num ${cls(dt.a/dt.y25-1)}">${P1(dt.a/dt.y25-1)}</td><td class="num ${cls(dt.a/dt.y24-1)}">${P1(dt.a/dt.y24-1)}</td><td class="num ${cls(dt.b/dt.y25-1)}">${P1(dt.b/dt.y25-1)}</td><td class="num ${cls(dt.b/dt.y24-1)}">${P1(dt.b/dt.y24-1)}</td></tr></tfoot></table></div>`;
  $('#btm').onclick=e=>{const b=e.target.closest('button');if(b){btM=+b.dataset.m;backtest()}}}
 function update(){saveDraft();draftBar();syncParams();compute();chart();kpis();table();detail();cal();ovbar();backtest();if(window.crmRender)crmRender()}
-const cv=$('#cview');cv.innerHTML='<option value="co">Compañía ('+RAW.length+' ejecutivos)</option>'+RAW.map((r,i)=>`<option value="${i}">${r.n}</option>`).join('');cv.onchange=()=>{if(cv.value==='co')chartMode='co';else{sel=+cv.value;chartMode='ex'}table();detail();chart()};
+const cv=$('#cview');const fillCv=()=>{const v=cv.value;cv.innerHTML='<option value="co">Compañía ('+RAW.length+' ejecutivos)</option>'+RAW.map((r,i)=>`<option value="${i}">${r.n}</option>`).join('');if([...cv.options].some(o=>o.value===v))cv.value=v};fillCv();cv.onchange=()=>{if(cv.value==='co')chartMode='co';else{sel=+cv.value;chartMode='ex'}table();detail();chart()};
 const sm=$('#mes');const fillMes=()=>{const o=[];for(let t=24;t<=CUT+12;t++)o.push(`<option value="${t}">${lab(t)}${t<=CUT?' (cerrado)':''}</option>`);sm.innerHTML=o.join('');sm.value=String(TS[mi])};fillMes();sm.onchange=()=>{const t=+sm.value;S0=t<=CUT?t:null;setTS();mi=t-TS[0];update()};
 $('#seg').onclick=e=>{const b=e.target.closest('button');if(!b)return;seg=b.dataset.s;[...$('#seg').children].forEach(c=>c.setAttribute('aria-pressed',c===b));table()};
 const VIEWS=['resumen','cal','bt','datos','crm','ajustes'];
@@ -385,7 +387,7 @@ let dT=CUT+1;
 function datosOpts(){const mx=Math.min(CUT+1,35);dT=Math.min(dT,mx);$('#dm').innerHTML=Array.from({length:mx-23},(_,k)=>mx-k).map(t=>`<option value="${t}">${lab(t)}${t>CUT?' (siguiente)':''}</option>`).join('');$('#dm').value=String(dT)}
 function datosRender(){const t=dT;$('#dtb').innerHTML=RAW.map((r,i)=>{const cap=EX[r.n]&&EX[r.n][t]!=null,v=ALL[i][t];return `<tr><td class="l">${r.n}</td><td class="l">${r.seg}</td><td class="num">${v==null?'—':fmtMX(v)}${cap?' <span class="pill p-acc">Capturado</span>':''}</td><td class="num"><input type="text" inputmode="numeric" data-i="${i}" aria-label="Venta nueva de ${r.n}" style="width:130px;text-align:right" value="${cap?EX[r.n][t]:''}"></td></tr>`}).join('')}
 const parseN=x=>{const c=String(x).replace(/[^0-9.\-]/g,'');if(c===''||c==='-'||c==='.')return null;const v=parseFloat(c);return isNaN(v)?null:v};
-function rebuild(){buildAll();S0=null;setTS();mi=0;btM=CUT;dT=Math.min(CUT+1,35);fillMes();datosOpts();datosRender();texts();update()}
+function rebuild(){buildAll();if(typeof fillCv==='function')fillCv();if(typeof sel==='number'&&sel>=RAW.length)sel=0;S0=null;setTS();mi=0;btM=CUT;dT=Math.min(CUT+1,35);fillMes();datosOpts();datosRender();texts();update()}
 const dmsg=t=>{$('#dmsg').textContent=t};
 $('#dm').onchange=()=>{dT=+$('#dm').value;dmsg('');$('#dvdn').hidden=true;datosRender()};
 const VD_URL='https://jigr1028-beep.github.io/venta-diaria/datos.json';
@@ -417,7 +419,7 @@ $('#bdown').onclick=()=>{const d=new Date(),f=d.getFullYear()+'-'+String(d.getMo
 $('#bup').onclick=()=>$('#bfile').click();
 $('#bfile').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);if(!j||j.v!==1||typeof j.ajustes!=='object'||typeof j.ventas!=='object')throw 0;
   OV=j.ajustes||{};OB=j.montos||{};EX=j.ventas||{};if(j.motor&&typeof j.motor==='object')P={...DEF,...j.motor};saveOV();saveEX();rebuild();bm('Respaldo cargado: '+Object.keys(OV).length+' ajustes y ventas de '+Object.keys(EX).length+' ejecutivos.')}catch(err){bm('El archivo no es un respaldo válido.',false)}e.target.value=''};rd.readAsText(f)};
-$('#bwipe').onclick=()=>{if(!confirm('Se borrarán los cambios sin publicar de este navegador (ajustes y ventas capturadas). ¿Continuar?'))return;OV=JSON.parse(JSON.stringify(DATOS.ajustes||{}));OB=JSON.parse(JSON.stringify(DATOS.montos||{}));EX={};IMP=false;P={...DEF,...(DATOS.motor||{})};saveDraft();rebuild();bm('Borrados los cambios sin publicar. Vuelves a lo publicado.')};
+$('#bwipe').onclick=()=>{if(!confirm('Se borrarán los cambios sin publicar de este navegador (ajustes y ventas capturadas). ¿Continuar?'))return;OV=JSON.parse(JSON.stringify(DATOS.ajustes||{}));OB=JSON.parse(JSON.stringify(DATOS.montos||{}));EX={};IMP=false;ADDN=[];mkRAW();P={...DEF,...(DATOS.motor||{})};saveDraft();rebuild();bm('Borrados los cambios sin publicar. Vuelves a lo publicado.')};
 datosOpts();datosRender();texts();
 
 function snapRAW(){return DATOS.ventas.map(r=>({n:r.n,seg:r.seg,y24:r.y24,y25:r.y25,y26:r.y26}))}
@@ -425,9 +427,10 @@ function refData(){if(DATOS.ref)return DATOS.ref;if(IMP)return{fecha:DATOS.versi
 const im=(t,ok=true)=>{$('#imsg').style.color=ok?'var(--good)':'var(--crit)';$('#imsg').textContent=t};
 $('#iup').onclick=()=>$('#ifile').click();
 $('#ifile').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);if(!j||j.tipo!=='ventas'||typeof j.ventas!=='object')throw 0;
+  (j.nuevos||[]).forEach(a=>{if(a&&a.n&&!RAW.some(r=>r.n===a.n)&&!ADDN.some(r=>r.n===a.n))ADDN.push({n:a.n,seg:a.seg||'NACIONALES'})});mkRAW();
   const nx={};let n=0;RAW.forEach(r=>{const a=j.ventas[r.n];if(!a)return;nx[r.n]={};a.forEach((v,t)=>{nx[r.n][t]=(v==null?null:Math.round(v))});n++});
-  if(n<RAW.length&&!confirm('El archivo trae '+n+' de '+RAW.length+' ejecutivos; los demás conservan sus ventas actuales. ¿Continuar?'))return;
-  EX=nx;IMP=true;saveDraft();rebuild();im('Ventas importadas ('+n+' ejecutivos, hasta '+lab(CUT)+'). Revisa y presiona Publicar ahora.')}catch(err){im('El archivo no es válido.',false)}e.target.value=''};rd.readAsText(f)};
+  if(!j.parcial&&n<RAW.length&&!confirm('El archivo trae '+n+' de '+RAW.length+' ejecutivos; los demás conservan sus ventas actuales. ¿Continuar?'))return;
+  Object.keys(nx).forEach(k=>{EX[k]=nx[k]});if(!j.parcial)EX=nx;IMP=true;saveDraft();rebuild();im('Ventas importadas ('+n+' ejecutivos, hasta '+lab(CUT)+'). Revisa y presiona Publicar ahora.')}catch(err){im('El archivo no es válido.',false)}e.target.value=''};rd.readAsText(f)};
 $('#iref').onclick=()=>{const R=DATOS.ref||(IMP?{fecha:DATOS.version,ventas:snapRAW()}:{fecha:DATOS.version,ventas:snapRAW()});
   const S=R.ventas.map(r=>[...r.y24,...r.y25,...r.y26]);let c=0;S.forEach(s=>s.forEach((v,t)=>{if(v!=null&&t>c)c=t}));
   const q=v=>v==null?'':Math.round(v);const L=[];
@@ -453,7 +456,7 @@ async function datosJS(){const ver=new Date().toISOString();
 function datosJSold(){const ver=new Date().toISOString();
  const rows=RAW.map((r,i)=>' {"n":'+JSON.stringify(r.n)+',"seg":'+JSON.stringify(r.seg)+',"y24":'+JSON.stringify(r.y24)+',"y25":'+JSON.stringify(r.y25)+',"y26":'+JSON.stringify(ALL[i].slice(24,CUT+1))+'}');
  return '// Datos del presupuesto LLYASA. Se genera desde el dashboard (Captura de ventas > Publicar). No editar a mano.\nwindow.DATOS={\n"version":'+JSON.stringify(ver)+',\n"motor":'+JSON.stringify(P)+',\n"ajustes":'+JSON.stringify(OV)+',\n"ventas":[\n'+rows.join(',\n')+'\n]};\n'}
-function draftBar(){const dirty=Object.keys(EX).length>0||JSON.stringify(OB)!==JSON.stringify(DATOS.montos||{})||JSON.stringify(OV)!==JSON.stringify(DATOS.ajustes||{})||JSON.stringify(P)!==JSON.stringify({...DEF,...(DATOS.motor||{})});$('#draft').hidden=!dirty}
+function draftBar(){const dirty=Object.keys(EX).length>0||ADDN.length>0||JSON.stringify(OB)!==JSON.stringify(DATOS.montos||{})||JSON.stringify(OV)!==JSON.stringify(DATOS.ajustes||{})||JSON.stringify(P)!==JSON.stringify({...DEF,...(DATOS.motor||{})});$('#draft').hidden=!dirty}
 const pm=(t,ok=true)=>{$('#pmsg').style.color=ok?'var(--good)':'var(--crit)';$('#pmsg').textContent=t};
 $('#pdown').onclick=async()=>{let txt;try{txt=await datosJS()}catch(e){pm(e.message,false);return}const blob=new Blob([txt],{type:'text/javascript'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='datos.js';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);pm('Descargado y cifrado. Súbelo a GitHub para publicarlo.');$('#ppw').value=''};
 $('#pcopy').onclick=async()=>{let t;try{t=await datosJS()}catch(e){pm(e.message,false);return}try{await navigator.clipboard.writeText(t);pm('Copiado y cifrado. Pégalo en datos.js de GitHub.');$('#ppw').value=''}catch(e){pm('No se pudo copiar; usa “Descargar datos.js”.',false)}};
